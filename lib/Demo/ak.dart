@@ -1,13 +1,7 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:music_player_saavn/Demo/demo.dart';
 import 'package:music_player_saavn/Home/Home%20View%20All/trending_now_view_all.dart';
-import 'package:music_player_saavn/Service/service.dart';
-import '../../Model/search.dart';
-import '../Drawer/drawer.dart';
-import '../Home/Home Screen/home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../Home/Home View All/Music viewAll/Top_song_view_all.dart';
 import '../Home/Home View All/Music viewAll/bollywood_song_view_all.dart';
 import '../Home/Home View All/Music viewAll/haryanvi_song_view_all.dart';
@@ -18,13 +12,11 @@ import '../Home/Home View All/new_releaees_view_all.dart';
 import '../Home/Home View All/recently_songs.dart';
 import '../Home/Home View All/top_chart_view_all.dart';
 import '../Home/HomeDeatils/home_deatils_song_list.dart';
-import '../Home/HomeDeatils/weekly_forecast_list.dart';
 import '../Model/Music/bollywood_songs.dart';
 import '../Model/Music/haryanvi.dart';
 import '../Model/Music/punjabi.dart';
 import '../Model/Music/top_hind_songs.dart';
 import '../Model/Music/trendings_songs.dart';
-import '../Model/Podcasts/trending_podcasts.dart';
 import '../Model/artist.dart';
 import '../Model/last.dart';
 import '../Model/new_releasse.dart';
@@ -33,6 +25,8 @@ import '../Model/top_charts.dart';
 import '../Model/trending.dart';
 import '../Seetings/settings.dart';
 import '../Service/MusicService.dart';
+import '../constants/color_constants.dart';
+import '../constants/firestore_constants.dart';
 import 'Core/app_globals.dart';
 
 class AkScreen extends StatefulWidget {
@@ -51,6 +45,9 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
   bool download = false;
   int selectIndex = 0;
   String searchQuery = '';
+
+  String photoUrl = '';
+
 
   // Home All List model class
   List<RecentlySongs> recently = [
@@ -727,9 +724,18 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
   @override
   void initState() {
     super.initState();
+    readLocal();
     _tabController = TabController(
         length: 2,
         vsync: this); // Adjust the length based on the number of tabs you want
+  }
+  Future<void> readLocal() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      photoUrl = prefs.getString(FirestoreConstants.photoUrl) ?? "";
+    });
+
+
   }
 
   @override
@@ -773,16 +779,22 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
 
                                 },
                                 child: Container(
-                                  width: 40.0,
-                                  height: 40.0,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    image: DecorationImage(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(30),
+                                    child: Image.network(
+                                      photoUrl,
                                       fit: BoxFit.cover,
-                                      image: NetworkImage(
-                                          'https://c.saavncdn.com/113/He-Shiv-Shankar-Hindi-2020-20200214121917-500x500.jpg'),
-                                    ),
-                                  ),
+                                      width: 50,
+                                      height: 50,
+                                      errorBuilder: (context, object, stackTrace) {
+                                        return Icon(
+                                          Icons.account_circle,
+                                          size: 50,
+                                          color: ColorConstants.greyColor,
+                                        );
+                                      },
+                                    )
+                                  )
                                 ),
                               ),
                             ),
@@ -864,7 +876,7 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
                             ),
                           ),
                           SizedBox(
-                            width: 40,
+                            width: 35,
                             child: Container(
                               constraints: BoxConstraints.expand(height: 90),
                               // Height of the tab bar
@@ -997,11 +1009,13 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
                                               // _playSong(recently[index] as int);
                                               // musicService.songPlay(recently);
 
-                                              musicService.playSong(
-                                                  recently[index].url,
-                                                  recently[index].image,
-                                                  recently[index].title,
-                                                  recently[index].subtitle);
+                                              musicService.playCurrentSong();
+
+                                              // musicService.playSong(
+                                              //     recently[index].url,
+                                              //     recently[index].image,
+                                              //     recently[index].title,
+                                              //     recently[index].subtitle);
                                             },
                                             child: Column(
                                               children: [

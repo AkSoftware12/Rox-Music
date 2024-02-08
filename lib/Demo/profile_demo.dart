@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:music_player_saavn/History%20Songs/history_songs.dart';
-import 'package:music_player_saavn/Home/Home%20View%20All/trending_now_view_all.dart';
-import '../../Model/recentaly.dart';
-import '../../Model/search.dart';
-import '../../Service/MusicService.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../Auth/auth_service.dart';
 import '../Home/Home View All/recently_songs.dart';
-import '../Home/HomeDeatils/home_deatils_song_list.dart';
 import '../Login/login.dart';
 import '../Profile/profile.dart';
 import '../Seetings/settings.dart';
+import '../constants/color_constants.dart';
+import '../constants/firestore_constants.dart';
+import 'dart:io';
 
 class ProfileDemoScreen extends StatefulWidget {
   const ProfileDemoScreen({super.key});
@@ -20,62 +19,38 @@ class ProfileDemoScreen extends StatefulWidget {
 }
 
 class _DashBoardScreenState extends State<ProfileDemoScreen> {
-  bool _progressVisible = false;
   AuthService _authService = AuthService();
   String? displayName;
   String? email;
   String? profileImage;
+  String id = '';
+  String nickname = '';
+  String aboutMe = '';
+  String photoUrl = '';
+  String userEmail = '';
+  File? avatarImageFile;
 
-  void _hideProgressBar() {
-    setState(() {
-      _progressVisible = false;
-    });
-  }
+
 
   @override
   void initState() {
     super.initState();
-    fetchUserDetails();
   }
 
-  // Check login status and update UI accordingly
-  void checkLoginStatus() async {
-    bool isLoggedIn = await _authService.isUserLoggedIn();
-    if (isLoggedIn) {
-      // User is logged in, fetch user details
-      fetchUserDetails();
-    }
-  }
 
-  // Fetch user details and update UI
-  void fetchUserDetails() async {
-    displayName = await _authService.getUserDisplayName();
-    email = await _authService.getUserEmail();
-    profileImage = await _authService.getUserProfileImage();
-
-    // Update the UI by calling setState
-    setState(() {});
-  }
-
-  void _showProgressBar(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Center(
-          child: CircularProgressIndicator(), // Progress bar widget
-        );
-      },
-    );
-    // Simulate a delay before hiding the progress bar
-    Future.delayed(Duration(seconds: 5), () async {
-      await _authService.logout();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
-      ); // Close the progress bar dialog
+  Future<void> readLocal() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      id = prefs.getString(FirestoreConstants.id) ?? "";
+      nickname = prefs.getString(FirestoreConstants.nickname) ?? "";
+      photoUrl = prefs.getString(FirestoreConstants.photoUrl) ?? "";
+      userEmail = prefs.getString(FirestoreConstants.userEmail) ?? "";
     });
+
+
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -155,7 +130,7 @@ class _DashBoardScreenState extends State<ProfileDemoScreen> {
                       // Card elevation
                       child: ListTile(
                         title: Text(
-                          'Ravikant saini',
+                          nickname,
                           style: GoogleFonts.poppins(
                             textStyle: const TextStyle(
                                 color: Colors.white,
@@ -164,7 +139,7 @@ class _DashBoardScreenState extends State<ProfileDemoScreen> {
                           ),
                         ),
                         subtitle: Text(
-                          'ravikantsaini03061996@gmail.com',
+                          userEmail,
                           style: GoogleFonts.poppins(
                             textStyle: const TextStyle(
                                 color: Colors.white,
@@ -172,11 +147,64 @@ class _DashBoardScreenState extends State<ProfileDemoScreen> {
                                 fontWeight: FontWeight.normal),
                           ),
                         ),
-                        leading: CircleAvatar(
-                          radius: 25.0,
-                          backgroundImage: AssetImage('assets/pngegg.png'),
-                          // backgroundImage: CachedNetworkImageProvider(img),
+                        leading:Container(
+                          margin: EdgeInsets.all(20),
+                          child: avatarImageFile == null
+                              ? photoUrl.isNotEmpty
+                              ? ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: Image.network(
+                              photoUrl,
+                              fit: BoxFit.cover,
+                              width: 140,
+                              height: 140,
+                              errorBuilder: (context, object, stackTrace) {
+                                return Icon(
+                                  Icons.account_circle,
+                                  size: 90,
+                                  color: ColorConstants.greyColor,
+                                );
+                              },
+                              loadingBuilder: (BuildContext context,
+                                  Widget child,
+                                  ImageChunkEvent? loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  width: 90,
+                                  height: 90,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: ColorConstants.themeColor,
+                                      value: loadingProgress
+                                          .expectedTotalBytes !=
+                                          null
+                                          ? loadingProgress
+                                          .cumulativeBytesLoaded /
+                                          loadingProgress
+                                              .expectedTotalBytes!
+                                          : null,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                              : Icon(
+                            Icons.account_circle,
+                            size: 90,
+                            color: ColorConstants.greyColor,
+                          )
+                              : ClipRRect(
+                            borderRadius: BorderRadius.circular(45),
+                            child: Image.file(
+                              avatarImageFile!,
+                              width: 90,
+                              height: 90,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
+
                         trailing: Icon(
                           Icons.edit,
                           color: Colors.white,

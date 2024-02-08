@@ -1,14 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:music_player_saavn/Seetings/settings.dart';
-import '../../Auth/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../CommonCalling/Common.dart';
 import '../../History Songs/history_songs.dart';
-import '../../Login/login.dart';
 import '../../Profile/profile.dart';
+import '../../constants/color_constants.dart';
+import '../../constants/firestore_constants.dart';
 import '../Home View All/recently_songs.dart';
+import 'dart:io';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -18,62 +21,40 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _DashBoardScreenState extends State<LibraryScreen> {
-  bool _progressVisible = false;
-  AuthService _authService = AuthService();
-  String? displayName;
-  String? email;
-  String? profileImage;
+  CommonMethod common = CommonMethod();
 
-  void _hideProgressBar() {
-    setState(() {
-      _progressVisible = false;
-    });
-  }
+  String id = '';
+  String nickname = '';
+  String aboutMe = '';
+  String photoUrl = '';
+  String userEmail = '';
+
+  bool isLoading = false;
+  File? avatarImageFile;
+
+
 
   @override
   void initState() {
     super.initState();
-    fetchUserDetails();
+    readLocal();
   }
 
-  // Check login status and update UI accordingly
-  void checkLoginStatus() async {
-    bool isLoggedIn = await _authService.isUserLoggedIn();
-    if (isLoggedIn) {
-      // User is logged in, fetch user details
-      fetchUserDetails();
-    }
-  }
-
-  // Fetch user details and update UI
-  void fetchUserDetails() async {
-    displayName = await _authService.getUserDisplayName();
-    email = await _authService.getUserEmail();
-    profileImage = await _authService.getUserProfileImage();
-
-    // Update the UI by calling setState
-    setState(() {});
-  }
-
-  void _showProgressBar(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Center(
-          child: CircularProgressIndicator(), // Progress bar widget
-        );
-      },
-    );
-    // Simulate a delay before hiding the progress bar
-    Future.delayed(Duration(seconds: 5), () async {
-      await _authService.logout();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
-      ); // Close the progress bar dialog
+  Future<void> readLocal() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      id = prefs.getString(FirestoreConstants.id) ?? "";
+      nickname = prefs.getString(FirestoreConstants.nickname) ?? "";
+      photoUrl = prefs.getString(FirestoreConstants.photoUrl) ?? "";
+      userEmail = prefs.getString(FirestoreConstants.userEmail) ?? "";
     });
+
+
   }
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -84,8 +65,6 @@ class _DashBoardScreenState extends State<LibraryScreen> {
       title: 'Music Player Saavn',
       home: Scaffold(
         backgroundColor: Colors.black,
-
-        // backgroundColor: const Color(0xFF222B40),
         body: CustomScrollView(
           slivers: [
             SliverAppBar(
@@ -95,7 +74,7 @@ class _DashBoardScreenState extends State<LibraryScreen> {
               // backgroundColor: const Color(0xFF222B40),
               backgroundColor: Colors.black,
               onStretchTrigger: () async {
-                // await Server.requestNewData();
+
               },
               flexibleSpace: FlexibleSpaceBar(
                 title: Padding(
@@ -143,6 +122,7 @@ class _DashBoardScreenState extends State<LibraryScreen> {
               ),
             ),
             SliverToBoxAdapter(
+
               child: Column(
                 children: [
                   Padding(
@@ -152,8 +132,10 @@ class _DashBoardScreenState extends State<LibraryScreen> {
                       // Controls the shadow depth
                       // Card elevation
                       child: ListTile(
-                        title: Text(
-                          'Ravikant saini',
+                        title:
+                        Text(
+
+                        nickname,
                           style: GoogleFonts.poppins(
                             textStyle: const TextStyle(
                                 color: Colors.white,
@@ -162,7 +144,7 @@ class _DashBoardScreenState extends State<LibraryScreen> {
                           ),
                         ),
                         subtitle: Text(
-                          'ravikantsaini03061996@gmail.com',
+                          userEmail,
                           style: GoogleFonts.poppins(
                             textStyle: const TextStyle(
                                 color: Colors.white,
@@ -170,14 +152,65 @@ class _DashBoardScreenState extends State<LibraryScreen> {
                                 fontWeight: FontWeight.normal),
                           ),
                         ),
-                        leading: CircleAvatar(
-                          radius: 25.0,
-                          backgroundImage: AssetImage('assets/pngegg.png'),
-                          // backgroundImage: CachedNetworkImageProvider(img),
+                        leading: Container(
+                          child: avatarImageFile == null
+                              ? photoUrl.isNotEmpty
+                              ? ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: Image.network(
+                              photoUrl,
+                              fit: BoxFit.cover,
+                              width: 50,
+                              height: 50,
+                              errorBuilder: (context, object, stackTrace) {
+                                return Icon(
+                                  Icons.account_circle,
+                                  size: 90,
+                                  color: ColorConstants.greyColor,
+                                );
+                              },
+                              loadingBuilder: (BuildContext context,
+                                  Widget child,
+                                  ImageChunkEvent? loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  width: 50,
+                                  height: 50,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: ColorConstants.themeColor,
+                                      value: loadingProgress
+                                          .expectedTotalBytes !=
+                                          null
+                                          ? loadingProgress
+                                          .cumulativeBytesLoaded /
+                                          loadingProgress
+                                              .expectedTotalBytes!
+                                          : null,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                              : Icon(
+                            Icons.account_circle,
+                            size: 90,
+                            color: ColorConstants.greyColor,
+                          )
+                              : ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: Image.file(
+                              avatarImageFile!,
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
                         trailing: Icon(
                           Icons.edit,
-                          color: Colors.white,
+                          color: Colors.cyanAccent,
                         ),
                         onTap: () {
                           Navigator.push(
@@ -594,23 +627,7 @@ class _DashBoardScreenState extends State<LibraryScreen> {
 
                                                 ]),
                                           ),
-                                          // Padding(
-                                          //   padding:
-                                          //       const EdgeInsets.only(left: 190.0),
-                                          //   child: GestureDetector(
-                                          //       onTap: () {
-                                          //         Navigator.push(
-                                          //           context,
-                                          //           MaterialPageRoute(
-                                          //             builder: (context) {
-                                          //               return RecentlySongsClass();
-                                          //             },
-                                          //           ),
-                                          //         );
-                                          //       },
-                                          //       child:
-                                          //           Icon(Icons.arrow_forward_ios)),
-                                          // ),
+
                                         ]);
                                   }),
                             ),
@@ -832,8 +849,8 @@ class _DashBoardScreenState extends State<LibraryScreen> {
                                   ),
                                 ),
                                 onTap: () {
-                                  _showProgressBar(context);
-                                  // _handleSignOut();
+                                  common.showProgressBar(context);
+
                                 },
                               ), // Margin around the card
                             ),

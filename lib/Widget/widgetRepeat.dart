@@ -33,7 +33,11 @@ class _PlayPauseWidgetState extends State<RepeatWidget> {
           size: 25.0,color: isPlaying ? Colors.white : Colors.grey,
         ),
         onPressed: () {
-          togglePlayPause();
+          musicService.toggleRepeatMode();
+          setState(() {
+            togglePlayPause();
+
+          });
         },
       ),
     );

@@ -1,15 +1,16 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:music_player_saavn/Home/HomeDeatils/weekly_forecast_list.dart';
 import 'package:music_player_saavn/Widget/widgetShuffle.dart';
-import 'package:on_audio_query_platform_interface/src/models/song_model.dart';
 import 'package:share/share.dart';
 import '../../Model/recentaly.dart';
 import '../../Model/search.dart';
 import '../../Service/MusicService.dart';
-import '../../Service/service.dart';
+import 'package:http/http.dart' as http;
+
 
 class SongsDeatilsList extends StatefulWidget {
   final String url;
@@ -48,6 +49,7 @@ class _SongsDeatilsListState extends State<SongsDeatilsList> {
 
   @override
   void initState() {
+    fetchData();
     super.initState();
     setState(() {
       // Navigator.pop(context);
@@ -168,6 +170,9 @@ class _SongsDeatilsListState extends State<SongsDeatilsList> {
     SearchData(imageUrl: 'https://cdn.pixabay.com/photo/2012/11/13/17/45/e-mail-65928_640.jpg', backgroundColor: Colors.lightGreen, text: 'The 2010s',),
   ];
   bool backButtonLocked = false;
+
+
+
 
   void _openDialog(BuildContext context, String title,String image,String url) {
       showModalBottomSheet(
@@ -366,6 +371,21 @@ class _SongsDeatilsListState extends State<SongsDeatilsList> {
 
   }
 
+
+  List<dynamic> songData = [];
+
+
+  Future<void> fetchData() async {
+    final response = await http.get(Uri.parse('https://suryavanshifilms.in/api-song'));
+    if (response.statusCode == 200) {
+      setState(() {
+        songData = json.decode(response.body); // Decode the JSON response
+      });
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -463,7 +483,7 @@ class _SongsDeatilsListState extends State<SongsDeatilsList> {
                                 child: SizedBox(
                                   width: 20,
                                     height: 20,
-                                    child: Image.asset('assets/r_m_image.png')),
+                                    child: Image.asset('assets/rox.png')),
                               ),                            ],
                           ),
                         ),
@@ -596,8 +616,98 @@ class _SongsDeatilsListState extends State<SongsDeatilsList> {
                 ],
               ),
             ),
-
-            const WeeklyForecastList(),
+            SliverPadding(
+              padding: EdgeInsets.all(8.0),
+              sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                      final cartItem = songData[index];
+                      return GestureDetector(
+                          onTap: () {
+                            musicService.playSong(cartItem['image2'], cartItem['image1'],
+                                cartItem['productName'], cartItem['entryDate']);
+                          },
+                          
+                          child: Card(
+                            color: Colors.black,
+                            elevation: 4,
+                            child: Row(
+                              children: <Widget>[
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: SizedBox(
+                                    width: 70.0,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(
+                                          10.0), // Adjust the radius as needed
+                                      child: Image.network(
+                                        cartItem['image1'],
+                                        width: 200.0,
+                                        // Adjust the width as needed
+                                        height: 50.0,
+                                        // Adjust the height as needed
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(20.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        Text(cartItem['productName']),
+                                        SizedBox(height: 10.0),
+                                        Text(cartItem['entryDate']),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: Row(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(right: 8.0),
+                                        child: IconButton(
+                                          icon: Icon(
+                                            recently[index].isLiked
+                                                ? Icons.favorite
+                                                : Icons.favorite_border,
+                                            color: recently[index].isLiked
+                                                ? Colors.red
+                                                : null,
+                                          ),
+                                          onPressed: () {
+                                            // Toggle the like status when the icon is pressed
+                                            recently[index].isLiked =
+                                            !recently[index].isLiked;
+                                            // Update the UI
+                                            setState(() {});
+                                          },
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.more_vert,
+                                          size: 25,
+                                          color: Colors.white,
+                                        ),
+                                        onPressed: () {
+                                          // _openDialog(context, index);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ));
+                    },
+                    childCount: songData.length,
+                  )),
+            ),
             SliverToBoxAdapter(
               child: Column(
                 children: [

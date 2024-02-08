@@ -1,122 +1,58 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:share/share.dart';
-import '../../Login/login.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../Profile/profile.dart';
-
-
+import '../CommonCalling/Common.dart';
+import 'dart:io';
+import '../constants/color_constants.dart';
+import '../constants/firestore_constants.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
-
 
   @override
   _DashBoardScreenState createState() => _DashBoardScreenState();
 }
 
 class _DashBoardScreenState extends State<SettingScreen> {
-  bool _progressVisible = false;
+  CommonMethod common = CommonMethod();
 
+  String id = '';
+  String nickname = '';
+  String aboutMe = '';
+  String photoUrl = '';
+  String userEmail = '';
 
-  // void _showProgressBar() {
-  //   setState(() {
-  //     _progressVisible = true;
-  //   });
-  //
-  //   // Add a delay of 2 seconds before allowing the text
-  // }
+  bool isLoading = false;
+  File? avatarImageFile;
 
-  void _hideProgressBar() {
-    setState(() {
-      _progressVisible = false;
-    });
-  }
 
 
   @override
   void initState() {
     super.initState();
-
+    readLocal();
   }
 
-
-  void _showProgressBar(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Center(
-          child: CircularProgressIndicator(), // Progress bar widget
-        );
-      },
-    );
-    // Simulate a delay before hiding the progress bar
-    Future.delayed(Duration(seconds: 2), () {
+  Future<void> readLocal() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      id = prefs.getString(FirestoreConstants.id) ?? "";
+      nickname = prefs.getString(FirestoreConstants.nickname) ?? "";
+      photoUrl = prefs.getString(FirestoreConstants.photoUrl) ?? "";
+      userEmail = prefs.getString(FirestoreConstants.userEmail) ?? "";
     });
-  }
-  void _onShareButtonPressed(BuildContext context) {
-    String title = "musicService.title";
-    String subtitle =" musicService.subtitle";
-    String url = "musicService.url";
-    String imagePath =" musicService.getImageUrl()";
 
-    Share.share(
-      '$title\n$subtitle\n $url',
-      // subject: musicService.title,
 
-      sharePositionOrigin: Rect.fromCircle(
-        center: Offset(0, 0),
-        radius: 100,
-      ),
-      // shareRect: Rect.fromCircle(
-      //   center: Offset(0, 0),
-      //   radius: 100,
-      // ),
-      // imageUrl: 'file:///$imagePath',
-    );
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
-    var listTile = ListTile(
-      title: Text(
-      'Ravikant',
-        style: GoogleFonts.poppins(
-          textStyle: const TextStyle(
-              color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
-      subtitle: Text(
-        'ravi@gmail.com',
-        style: GoogleFonts.poppins(
-          textStyle: const TextStyle(
-              color: Colors.white, fontSize: 15, fontWeight: FontWeight.normal),
-        ),
-      ),
-      leading:
-       CircleAvatar(
-        radius: 20.0,
-        backgroundImage: AssetImage('assets/pngegg.png'),
-        // backgroundImage: CachedNetworkImageProvider(img),
-      ),
-      trailing: Icon(
-        Icons.edit,
-        color: Colors.cyanAccent,
-      ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) {
-              return ProfileScreen();
-            },
-          ),
-        );
-      },
-    );
     return Scaffold(
         backgroundColor:  Colors.black,
         // backgroundColor: Color(0xEE2B2E2F),
@@ -148,16 +84,120 @@ class _DashBoardScreenState extends State<SettingScreen> {
                 ), // Margin around the card
               ),
             ),
-            // _buildBody(),
+
+ //  6230115742
             Padding(
-              padding: const EdgeInsets.only(top: 0.0, bottom: 8),
+              padding: const EdgeInsets.only(top: 0.0, bottom: 30),
               child: Container(
-                height: 60,
                 // Card elevation
 
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: listTile,
+                  padding: const EdgeInsets.only(bottom: 0.0),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 0.0),
+                        child: Container(
+                          height: 50,
+                          // Controls the shadow depth
+                          // Card elevation
+                          child: ListTile(
+                            title:
+                            Text(
+
+                              nickname,
+                              style: GoogleFonts.poppins(
+                                textStyle: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            subtitle: Text(
+                              userEmail,
+                              style: GoogleFonts.poppins(
+                                textStyle: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.normal),
+                              ),
+                            ),
+                            leading: Container(
+                              child: avatarImageFile == null
+                                  ? photoUrl.isNotEmpty
+                                  ? ClipRRect(
+                                borderRadius: BorderRadius.circular(30),
+                                child: Image.network(
+                                  photoUrl,
+                                  fit: BoxFit.cover,
+                                  width: 50,
+                                  height: 50,
+                                  errorBuilder: (context, object, stackTrace) {
+                                    return Icon(
+                                      Icons.account_circle,
+                                      size: 90,
+                                      color: ColorConstants.greyColor,
+                                    );
+                                  },
+                                  loadingBuilder: (BuildContext context,
+                                      Widget child,
+                                      ImageChunkEvent? loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      width: 50,
+                                      height: 50,
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          color: ColorConstants.themeColor,
+                                          value: loadingProgress
+                                              .expectedTotalBytes !=
+                                              null
+                                              ? loadingProgress
+                                              .cumulativeBytesLoaded /
+                                              loadingProgress
+                                                  .expectedTotalBytes!
+                                              : null,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              )
+                                  : Icon(
+                                Icons.account_circle,
+                                size: 90,
+                                color: ColorConstants.greyColor,
+                              )
+                                  : ClipRRect(
+                                borderRadius: BorderRadius.circular(30),
+                                child: Image.file(
+                                  avatarImageFile!,
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            trailing: Icon(
+                              Icons.edit,
+                              color: Colors.cyanAccent,
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return ProfileScreen();
+                                  },
+                                ),
+                              );
+                            },
+                          ), // Margin around the card
+                        ),
+                      ),
+                    ],
+                  ),
+
                 ),
                 // Margin around the card
               ),
@@ -388,7 +428,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                         ),
                       ),
                       onTap: () {
-                        _onShareButtonPressed(context);
+                        common.onShareButtonPressed(context);
                       },
                     ), // Margin around the card
                   ),
@@ -736,8 +776,8 @@ class _DashBoardScreenState extends State<SettingScreen> {
                         ),
                       ),
                       onTap: () {
-                        _showProgressBar(context);
-                        // _handleSignOut();
+                        common.showProgressBar(context);
+
                       },
                     ), // Margin around the card
                   ),

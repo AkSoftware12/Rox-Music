@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../constants/firestore_constants.dart';
 
 class AuthService {
 
@@ -8,6 +9,11 @@ class AuthService {
   final GoogleSignIn googleSignIn = GoogleSignIn();
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
   final String _loggedInKey = 'loggedIn';
+
+
+
+
+
 
   Future<bool> isUserLoggedIn() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -23,50 +29,29 @@ class AuthService {
         accessToken: googleSignInAuthentication.accessToken,
         idToken: googleSignInAuthentication.idToken,
       );
+      User? firebaseUser = (await _auth.signInWithCredential(credential)).user;
 
-      final UserCredential authResult = await _auth.signInWithCredential(credential);
-      final User? user = authResult.user;
+      // Write data to local storage
 
-      assert(user!.email != null);
-      assert(user!.displayName != null);
-      assert(user!.photoURL != null);
-
-      print('Signed in: ${user?.displayName}');
-
-
-      // Perform additional tasks if needed (e.g., exchange token with server)
-
-      // Store login status
       SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      User? currentUser = firebaseUser;
+      await prefs.setString(FirestoreConstants.id, currentUser!.uid);
+      await prefs.setString(FirestoreConstants.nickname, currentUser.displayName ?? "");
+      await prefs.setString(FirestoreConstants.photoUrl, currentUser.photoURL ?? "");
+      await prefs.setString(FirestoreConstants.userEmail, currentUser.email ?? "");
       prefs.setBool(_loggedInKey, true);
 
-      return user;
+
+
     } catch (e) {
       print(e.toString());
       return null;
     }
+    return null;
   }
 
 
-  // Future<void> loginWithGoogle() async {
-  //   try {
-  //     GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-  //
-  //     if (googleUser == null) {
-  //       // User cancelled the sign-in
-  //       return;
-  //     }
-  //
-  //     // Perform additional tasks if needed (e.g., exchange token with server)
-  //
-  //     // Store login status
-  //     SharedPreferences prefs = await SharedPreferences.getInstance();
-  //     prefs.setBool(_loggedInKey, true);
-  //   } catch (error) {
-  //     // Handle errors
-  //     print('Error signing in with Google: $error');
-  //   }
-  // }
 
   Future<void> logout() async {
     await _googleSignIn.signOut();
@@ -74,22 +59,12 @@ class AuthService {
     // Clear login status
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool(_loggedInKey, false);
+    prefs.remove(FirestoreConstants.id,);
+    prefs.remove(FirestoreConstants.nickname,);
+    prefs.remove(FirestoreConstants.photoUrl,);
+    prefs.remove(FirestoreConstants.userEmail,);
 
 
   }
 
-  Future<String?> getUserDisplayName() async {
-    GoogleSignInAccount? user = _googleSignIn.currentUser;
-    return user?.displayName;
-  }
-
-  Future<String?> getUserEmail() async {
-    GoogleSignInAccount? user = _googleSignIn.currentUser;
-    return user?.email;
-  }
-
-  Future<String?> getUserProfileImage() async {
-    GoogleSignInAccount? user = _googleSignIn.currentUser;
-    return user?.photoUrl;
-  }
 }

@@ -4,8 +4,10 @@ import '../../Service/MusicService.dart';
 import '../../Widget/widget.dart';
 
 class MiniPlayer extends StatefulWidget {
-  MiniPlayer({Key? key, required this.onTap}) : super(key: key);
+  MiniPlayer({Key? key, required this.onTap, required this.isPlaying}) : super(key: key);
   final Function onTap;
+  final bool isPlaying;
+
 
   @override
   _MiniPlayerState createState() => _MiniPlayerState();
@@ -108,9 +110,8 @@ class _MiniPlayerState extends State<MiniPlayer> {
                       ),
                     ),
                     SizedBox(width: 20),
-                    PlayPauseWidget(
+                   PlayPauseWidget(),
 
-                    ),
                     SizedBox(width: 20),
                   ],
                 ),

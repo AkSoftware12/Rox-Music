@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
-
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../Utils/color.dart';
+import '../constants/color_constants.dart';
+import '../constants/firestore_constants.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +23,6 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor:  Colors.black,
-        // ignore: unnecessary_null_comparison
         title: const Text(
           'Profile',
           style: TextStyle(
@@ -46,9 +54,11 @@ class ProfileWidget extends StatefulWidget {
 }
 
 class _ProfileWidgetState extends State<ProfileWidget> {
-  File? galleryFile;
   final picker = ImagePicker();
   bool isVisible = false;
+  final FocusNode focusNodeNickname = FocusNode();
+  final FocusNode focusNodeEmail = FocusNode();
+  final FocusNode focusNodeAboutMe = FocusNode();
 
   void toggleVisibility() {
     setState(() {
@@ -56,24 +66,42 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     });
   }
 
-  String profileName = "John Doe"; // Initial profile name
-  String profileEmail = "ravi@gmail.com"; // Initial profile name
-  String profileContact = "6397199758"; // Initial profile name
-  String profileDesignation = "Developer"; // Initial profile name
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _contactController = TextEditingController();
-  final TextEditingController _designationController = TextEditingController();
+  TextEditingController? controllerNickname;
+  TextEditingController? controllerEmail;
+  TextEditingController? controllerAboutMe;
+
   bool isEditing = false;
+
+  String id = '';
+  String nickname = '';
+  String aboutMe = '';
+  String photoUrl = '';
+  String userEmail = '';
+
+  bool isLoading = false;
+  File? avatarImageFile;
 
   @override
   void initState() {
     super.initState();
-    _nameController.text = profileName;
-    _emailController.text = profileEmail;
-    _contactController.text = profileContact;
-    _designationController.text = profileDesignation;
+    readLocal();
   }
+
+  Future<void> readLocal() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      id = prefs.getString(FirestoreConstants.id) ?? "";
+      nickname = prefs.getString(FirestoreConstants.nickname) ?? "";
+      photoUrl = prefs.getString(FirestoreConstants.photoUrl) ?? "";
+      userEmail = prefs.getString(FirestoreConstants.userEmail) ?? "";
+    });
+
+    controllerNickname = TextEditingController(text: nickname);
+    controllerEmail = TextEditingController(text: userEmail);
+    controllerAboutMe = TextEditingController(text: aboutMe);
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -90,31 +118,67 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  SizedBox(
-                    width: 140.0,
-                    height: 140.0,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(
-                          100.0), // Adjust the value to control the roundness
-                      child: galleryFile == null
-                          ? Image.network(
-                              'https://c.saavncdn.com/807/Kabir-Singh-Hindi-2019-20190614075009-500x500.jpg',
-                              fit: BoxFit.cover,
-                            )
-                          : ClipOval(
-                              child: Image.file(
-                                galleryFile!,
-                                width: 150.0,
-                                height: 150.0,
-                                fit: BoxFit.cover,
+                  Container(
+                    margin: EdgeInsets.all(20),
+                    child: avatarImageFile == null
+                        ? photoUrl.isNotEmpty
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: Image.network(
+                        photoUrl,
+                        fit: BoxFit.cover,
+                        width: 140,
+                        height: 140,
+                        errorBuilder: (context, object, stackTrace) {
+                          return Icon(
+                            Icons.account_circle,
+                            size: 90,
+                            color: ColorConstants.greyColor,
+                          );
+                        },
+                        loadingBuilder: (BuildContext context,
+                            Widget child,
+                            ImageChunkEvent? loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            width: 90,
+                            height: 90,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: ColorConstants.themeColor,
+                                value: loadingProgress
+                                    .expectedTotalBytes !=
+                                    null
+                                    ? loadingProgress
+                                    .cumulativeBytesLoaded /
+                                    loadingProgress
+                                        .expectedTotalBytes!
+                                    : null,
                               ),
                             ),
+                          );
+                        },
+                      ),
+                    )
+                        : Icon(
+                      Icons.account_circle,
+                      size: 90,
+                      color: ColorConstants.greyColor,
+                    )
+                        : ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: Image.file(
+                        avatarImageFile!,
+                        width: 140,
+                        height: 140,
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  )
+                  ),
                 ],
               ),
               Padding(
-                  padding: const EdgeInsets.only(top: 100.0, right: 100.0),
+                  padding: const EdgeInsets.only(top: 135.0, right: 110.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
@@ -135,42 +199,15 @@ class _ProfileWidgetState extends State<ProfileWidget> {
             ]),
           ),
           const SizedBox(height: 10),
-          const Text(
-            'Ravikant Saini',
+           Text(
+            nickname,
             style: TextStyle(color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
-          ListTile(
-            trailing: isEditing
-                ? IconButton(
-                    icon: const Icon(
-                      Icons.check,
-                      color: Colors.redAccent,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        profileName = _nameController.text;
-                        profileEmail = _emailController.text;
-                        profileContact = _contactController.text;
-                        isEditing = false;
-                      });
-                    },
-                  )
-                : IconButton(
-                    icon: const Icon(
-                      Icons.edit,
-                      color: Colors.redAccent,
-                    ),
-                    onPressed: () {
-                      toggleVisibility();
-                      setState(() {
-                        isEditing = true;
-                      });
-                    },
-                  ),
-          ),
+          const SizedBox(height: 40),
+
           const Padding(
             padding: EdgeInsets.only(top: 5.0),
             child: Divider(
@@ -180,7 +217,11 @@ class _ProfileWidgetState extends State<ProfileWidget> {
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.account_circle,size: 30,color: Colors.white,),
+            leading: const Icon(
+              Icons.account_circle,
+              size: 30,
+              color: Colors.white,
+            ),
             title: Text(
               'Name',
               style: GoogleFonts.poppins(
@@ -190,23 +231,25 @@ class _ProfileWidgetState extends State<ProfileWidget> {
                     fontWeight: FontWeight.normal),
               ),
             ),
-            subtitle: isEditing
-                ? TextFormField(
-                    controller: _nameController,
-                    keyboardType: TextInputType.name,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter your name',
-                    ),
-                  )
-                : Text(
-                    profileName,
-                    style: GoogleFonts.poppins(
-                      textStyle: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.normal),
-                    ),
-                  ),
+            subtitle: TextField(
+              decoration: InputDecoration(
+                hintText: 'Sweetie',
+                contentPadding: EdgeInsets.all(5),
+                hintStyle: TextStyle(
+                  color: ColorSelect.textcolor, // Set the hint text color
+                ),
+                // Remove underline
+                border: InputBorder.none,
+              ),
+              style: TextStyle(
+                color: Colors.white, // Set the text color
+              ),
+              controller: controllerNickname,
+              onChanged: (value) {
+                nickname = value;
+              },
+              focusNode: focusNodeNickname,
+            ),
           ),
           const Divider(
             color: Colors.grey, // Set the color of the divider
@@ -214,128 +257,100 @@ class _ProfileWidgetState extends State<ProfileWidget> {
             height: 1, // Set the height of the divider
           ),
           ListTile(
-            leading: const Icon(Icons.email,size: 30,color: Colors.white,),
-            title: Text(
-              'Email',
-              style: GoogleFonts.poppins(
-                textStyle: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 19,
-                    fontWeight: FontWeight.normal),
+              leading: const Icon(
+                Icons.email,
+                size: 30,
+                color: Colors.white,
               ),
-            ),
-            subtitle: isEditing
-                ? TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter your name',
-                    ),
-                  )
-                : Text(
-                    profileEmail,
-                    style: GoogleFonts.poppins(
-                      textStyle: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.normal),
-                    ),
+              title: Text(
+                'Email',
+                style: GoogleFonts.poppins(
+                  textStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 19,
+                      fontWeight: FontWeight.normal),
+                ),
+              ),
+              subtitle: TextField(
+                decoration: const InputDecoration(
+                  hintText: 'Sweetie',
+                  contentPadding: EdgeInsets.all(5),
+                  hintStyle: TextStyle(
+                    color: ColorSelect.textcolor,
                   ),
-          ),
+                  // Remove underline
+                  border: InputBorder.none,
+                ),
+                style: TextStyle(
+                  color: Colors.white, // Set the text color
+                ),
+                controller: controllerEmail,
+                onChanged: (value) {
+                  userEmail = value;
+                },
+                focusNode: focusNodeEmail,
+              )),
           const Divider(
             color: Colors.grey, // Set the color of the divider
             thickness: 1.0, // Set the thickness of the divider
             height: 1, // Set the height of the divider
           ),
           ListTile(
-            leading: const Icon(Icons.call,size: 30,color: Colors.white,),
-            title: Text(
-              'Contact',
-              style: GoogleFonts.poppins(
-                textStyle: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 19,
-                    fontWeight: FontWeight.normal),
+              leading: Icon(
+                Icons.account_circle,
+                size: 30,
+                color: Colors.white,
               ),
-            ),
-            subtitle: isEditing
-                ? TextFormField(
-                    controller: _contactController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter your name',
-                    ),
-                  )
-                : Text(
-                    profileContact,
-                    style: GoogleFonts.poppins(
-                      textStyle: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.normal),
-                    ),
-                  ),
-          ),
-          const Divider(
-            color: Colors.grey, // Set the color of the divider
-            thickness: 1.0, // Set the thickness of the divider
-            height: 1, // Set the height of the divider
-          ),
-          ListTile(
-            leading: Icon(Icons.account_circle,size: 30,color: Colors.white,),
-            title: Text(
-              'Designation',
-              style: GoogleFonts.poppins(
-                textStyle: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 19,
-                    fontWeight: FontWeight.normal),
+              title: Text(
+                'About Me',
+                style: GoogleFonts.poppins(
+                  textStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 19,
+                      fontWeight: FontWeight.normal),
+                ),
               ),
-            ),
-            subtitle: isEditing
-                ? TextFormField(
-                    controller: _designationController,
-                    keyboardType: TextInputType.name,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter your name',
-                    ),
-                  )
-                : Text(
-                    profileDesignation,
-                    style: GoogleFonts.poppins(
-                      textStyle: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.normal),
-                    ),
+              subtitle: TextField(
+                decoration: const InputDecoration(
+                  hintText: 'Bio',
+                  contentPadding: EdgeInsets.all(5),
+                  hintStyle: TextStyle(
+                    color: ColorSelect.textcolor,
                   ),
-          ),
+                  // Remove underline
+                  border: InputBorder.none,
+                ),
+                controller: controllerAboutMe,
+                onChanged: (value) {
+                  aboutMe = value;
+                },
+                focusNode: focusNodeAboutMe,
+              )),
           const Divider(
             color: Colors.grey, // Set the color of the divider
             thickness: 1.0, // Set the thickness of the divider
             height: 1, // Set the height of the divider
           ),
           SizedBox(height: 20),
-          Visibility(
-            visible: isVisible,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 28.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text(
-                  'Update Profile',
-                  style: GoogleFonts.poppins(
-                    textStyle: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 19,
-                        fontWeight: FontWeight.normal),
-                  ),
+          Padding(
+            padding: const EdgeInsets.only(top: 28.0),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  primary:ColorSelect.buttonColor // Set the background color here
+              ),
+              onPressed: () {
+              },
+              child: Text(
+                'Update Profile',
+                style: GoogleFonts.poppins(
+                  textStyle: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 15,
+                      fontWeight: FontWeight.normal),
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     ));
@@ -381,7 +396,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     setState(
       () {
         if (xfilePick != null) {
-          galleryFile = File(pickedFile!.path);
+          avatarImageFile = File(pickedFile!.path);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(// is this context <<<
               const SnackBar(content: Text('Nothing is selected')));

@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "803209622253",
-    "project_id": "ring-music",
-    "storage_bucket": "ring-music.appspot.com"
+    "project_number": "1043037196751",
+    "project_id": "rox-music-27c8a",
+    "storage_bucket": "rox-music-27c8a.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:803209622253:android:2fb4709b087ef15aaf52e4",
+        "mobilesdk_app_id": "1:1043037196751:android:58b3009980676393e8c2ba",
         "android_client_info": {
-          "package_name": "com.ring_music"
+          "package_name": "com.rox_music_player"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCpczQJ2cXSwBuvr_mCHcuPdgnUYiaIoyE"
+          "current_key": "AIzaSyAZiRicMosfebispFPUKhWM_IsT2LkVL1g"
         }
       ],
       "services": {

@@ -1,11 +1,15 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/adapters.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:music_player_saavn/Home/home.dart';
 
 import 'Auth/auth_service.dart';
 import 'Demo/demo.dart';
 import 'Login/login.dart';
+import 'OfflineSongs/data/services/hive_box.dart';
 import 'Service/audio_handler.dart';
 late AudioHandler _audioHandler;
 
@@ -21,6 +25,21 @@ Future<void> main() async {
   // );
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // initialize hive
+  await Hive.initFlutter();
+  await Hive.openBox(HiveBox.boxName);
+  //
+  // // initialize audio service
+  //
+  // await JustAudioBackground.init(
+  //   androidNotificationChannelId: 'com.shokhrukhbek.meloplay.channel.audio',
+  //   androidNotificationChannelName: 'Meloplay Audio',
+  //   androidNotificationOngoing: true,
+  //   androidStopForegroundOnPause: true,
+  // );
+  //
+
   runApp(const MyApp());
 }
 

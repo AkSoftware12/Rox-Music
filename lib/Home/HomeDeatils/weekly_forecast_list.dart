@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../Model/recentaly.dart';
 import '../../Service/MusicService.dart';
+import 'package:http/http.dart' as http;
 
 class WeeklyForecastList extends StatefulWidget {
   const WeeklyForecastList({Key? key}) : super(key: key);
@@ -14,6 +17,19 @@ class _WeeklyForecastListState extends State<WeeklyForecastList> {
   MusicService musicService = MusicService();
   bool isLiked = false;
   bool download = false;
+  List<dynamic> songData = [];
+
+
+  Future<void> fetchData() async {
+    final response = await http.get(Uri.parse('https://suryavanshifilms.in/api-song'));
+    if (response.statusCode == 200) {
+      setState(() {
+        songData = json.decode(response.body); // Decode the JSON response
+      });
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
 
   List<RecentlySongs> recently = [
     RecentlySongs(
@@ -109,7 +125,12 @@ class _WeeklyForecastListState extends State<WeeklyForecastList> {
     ),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
 
+  }
 
   void _openDialog(BuildContext context, int index) {
       showGeneralDialog(
@@ -342,14 +363,20 @@ class _WeeklyForecastListState extends State<WeeklyForecastList> {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          recently.length;
+          songData.length;
+          // apiData.length;
           return GestureDetector(
               onTap: () {
                 musicService.playSong(
-                    recently[index].url,
-                    recently[index].image,
-                    recently[index].title,
-                    recently[index].subtitle);
+                    songData[index]['image2'],
+                    // recently[index].url,
+                    songData[index]['image1'],
+                    // recently[index].image,
+                    songData[index]['productName'],
+                    // recently[index].title,
+                    songData[index]['entryDate'],
+                    // recently[index].subtitle
+                );
               },
               child: Card(
                 color: Colors.black,
@@ -364,7 +391,8 @@ class _WeeklyForecastListState extends State<WeeklyForecastList> {
                           borderRadius: BorderRadius.circular(
                               10.0), // Adjust the radius as needed
                           child: Image.network(
-                            recently[index].image,
+                            // recently[index].image,
+                            songData[index]['image1'],
                             width: 200.0, // Adjust the width as needed
                             height: 50.0, // Adjust the height as needed
                             fit: BoxFit.cover,
@@ -378,9 +406,9 @@ class _WeeklyForecastListState extends State<WeeklyForecastList> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            Text(recently[index].title.toString()),
+                            Text( songData[index]['productName']),
                             SizedBox(height: 10.0),
-                            Text(recently[index].subtitle),
+                            Text(songData[index]['entryDate']),
                           ],
                         ),
                       ),
@@ -426,7 +454,7 @@ class _WeeklyForecastListState extends State<WeeklyForecastList> {
                 ),
               ));
         },
-        childCount: 5,
+        childCount: songData.length,
       ),
     );
   }

@@ -30,10 +30,11 @@ class _PlayPauseWidgetState extends State<ShuffleWidget> {
           isPlaying
               ? Icons.shuffle
               : Icons.shuffle,
-          size: 25.0,color: isPlaying ? Colors.white : Colors.grey,
+          size: 25.0,color: isPlaying ? Colors.cyanAccent : Colors.grey,
         ),
         onPressed: () {
           togglePlayPause();
+          MusicService().toggleShuffleMode();
         },
       ),
     );

@@ -1,13 +1,41 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:just_audio/just_audio.dart';
 import 'package:music_player_saavn/Model/recentaly.dart';
+enum RepeatMode {
+  none,
+  all,
+  one,
+}
+
+enum PlayPauseButtonState {
+  loading,
+  paused,
+  playing,
+}
 
 class MusicService {
   static final MusicService _instance = MusicService._internal();
   static AudioPlayer _audioPlayer = AudioPlayer();
   StreamController<bool> _loadingController = StreamController<bool>.broadcast();
   bool _isLoading = false;
+  bool _isShuffling = false;
+  PlayPauseButtonState buttonState = PlayPauseButtonState.loading;
+
+
+  RepeatMode _repeatMode = RepeatMode.none;
+
+  RepeatMode get repeatMode => _repeatMode;
+
+
+  RecentlySongs get currentSong => _songs[_currentIndex];
+
+  Future<void> playCurrentSong() async {
+    RecentlySongs currentSong = _songs[_currentIndex];
+    await playSong(currentSong.url, currentSong.image, currentSong.title, currentSong.subtitle);
+  }
+
 
   Stream<bool> getLoadingStream() {
     return _loadingController.stream;
@@ -130,9 +158,14 @@ class MusicService {
   factory MusicService() {
     return _instance;
   }
+  MusicService._internal() {
+    _audioPlayer.playerStateStream.listen((playerState) {
+      if (playerState.processingState == ProcessingState.completed) {
+        playNextSong();
+      }
+    });
+  }
 
-
-  MusicService._internal();
 
   String get title => _title;
   String get subtitle => _subtitle;
@@ -156,6 +189,7 @@ class MusicService {
       _imageUrl = imageUrl;
       await _audioPlayer.setUrl(url);
       await _audioPlayer.play();
+      buttonState = PlayPauseButtonState.playing;
     } catch (e) {
       print('Error playing song: $e');
     }
@@ -168,6 +202,7 @@ class MusicService {
   Future<void> pauseSong() async {
     try {
       await _audioPlayer.pause();
+      buttonState = PlayPauseButtonState.paused;
 
       _isLoading = false;
       _loadingController.add(_isLoading);
@@ -210,6 +245,24 @@ class MusicService {
     }
   }
 
+
+
+  Future<void> playNextSong() async {
+    await playNext();
+    if (_repeatMode != RepeatMode.one) {
+      await playCurrentSong();
+    }
+  }
+
+  Future<void> playPreviousSong() async {
+    playPrevious();
+    if (_repeatMode != RepeatMode.one) {
+      await playCurrentSong();
+    }
+  }
+
+
+
   String getImageUrl() {
     return _imageUrl;
   }
@@ -233,31 +286,65 @@ class MusicService {
 
 
 
-
   Future<void> playNext() async {
-    if (_currentIndex < _songs.length - 1) {
-      _currentIndex++;
-      // playSonglist(_songs[_currentIndex]);
+    if (_isShuffling) {
+      _currentIndex = _getRandomIndex();
     } else {
-      // If at the end of the list, start from the beginning
-      _currentIndex = 0;
-      // playSonglist(_songs[_currentIndex]);
+      if (_currentIndex < _songs.length - 1) {
+        _currentIndex++;
+      } else {
+        if (_repeatMode == RepeatMode.all) {
+          _currentIndex = 0;
+        } else {
+          // Stop playback if repeat mode is not all
+          _audioPlayer.stop();
+          return;
+        }
+      }
     }
+
+    await playSong(_songs[_currentIndex].url, _songs[_currentIndex].image,
+        _songs[_currentIndex].title, _songs[_currentIndex].subtitle);
   }
 
   void playPrevious() {
     if (_currentIndex > 0) {
       _currentIndex--;
-      // playSonglist(_songs[_currentIndex]);
     } else {
-      // If at the beginning of the list, go to the end
-      _currentIndex = _songs.length - 1;
-      // playSonglist(_songs[_currentIndex]);
+      if (_repeatMode == RepeatMode.all) {
+        _currentIndex = _songs.length - 1;
+      } else {
+        // Stop playback if repeat mode is not all
+        _audioPlayer.stop();
+        return;
+      }
     }
+    playSong(_songs[_currentIndex].url, _songs[_currentIndex].image,
+        _songs[_currentIndex].title, _songs[_currentIndex].subtitle);
   }
-
   void stopSong() {
     _audioPlayer.stop();
   }
 
+  void toggleRepeatMode() {
+    switch (_repeatMode) {
+      case RepeatMode.none:
+        _repeatMode = RepeatMode.all;
+        break;
+      case RepeatMode.all:
+        _repeatMode = RepeatMode.one;
+        break;
+      case RepeatMode.one:
+        _repeatMode = RepeatMode.none;
+        break;
+    }
+  }
+  int _getRandomIndex() {
+    final random = Random();
+    return random.nextInt(_songs.length);
+  }
+
+  void toggleShuffleMode() {
+    _isShuffling = !_isShuffling;
+  }
 }
