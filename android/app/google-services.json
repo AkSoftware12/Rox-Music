@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "803209622253",
+    "project_id": "ring-music",
+    "storage_bucket": "ring-music.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:803209622253:android:2fb4709b087ef15aaf52e4",
+        "android_client_info": {
+          "package_name": "com.ring_music"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpczQJ2cXSwBuvr_mCHcuPdgnUYiaIoyE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
