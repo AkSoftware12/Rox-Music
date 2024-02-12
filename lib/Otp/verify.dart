@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pinput/pinput.dart';
+import 'package:pin_code_fields/pin_code_fields.dart';
 import '../Home/home.dart';
 
 class MyVerify extends StatefulWidget {
@@ -13,29 +13,6 @@ class MyVerify extends StatefulWidget {
 class _MyVerifyState extends State<MyVerify> {
   @override
   Widget build(BuildContext context) {
-    final defaultPinTheme = PinTheme(
-      width: 56,
-      height: 56,
-      textStyle: const TextStyle(
-          fontSize: 20,
-          color: Color.fromRGBO(30, 60, 87, 1),
-          fontWeight: FontWeight.w600),
-      decoration: BoxDecoration(
-        border: Border.all(color: Color.fromRGBO(234, 239, 243, 1)),
-        borderRadius: BorderRadius.circular(20),
-      ),
-    );
-
-    final focusedPinTheme = defaultPinTheme.copyDecorationWith(
-      border: Border.all(color: Color.fromRGBO(114, 178, 238, 1)),
-      borderRadius: BorderRadius.circular(8),
-    );
-
-    final submittedPinTheme = defaultPinTheme.copyWith(
-      decoration: defaultPinTheme.decoration?.copyWith(
-        color: Color.fromRGBO(234, 239, 243, 1),
-      ),
-    );
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -60,9 +37,8 @@ class _MyVerifyState extends State<MyVerify> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/img1.png',
-                width: 150,
-                height: 150,
+                'assets/otp_verfiy.png',
+                height: 250,
               ),
               const SizedBox(
                 height: 25,
@@ -87,16 +63,48 @@ class _MyVerifyState extends State<MyVerify> {
                   height: 30,
                 ),
               ),
-              Pinput(
-                length: 6,
-                // defaultPinTheme: defaultPinTheme,
-                // focusedPinTheme: focusedPinTheme,
-                // submittedPinTheme: submittedPinTheme,
-
-                showCursor: true,
-                onCompleted: (pin) => print(pin),
-              ),
-              const SizedBox(
+              Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Enter 6-digit OTP code',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 20.0),
+                    PinCodeTextField(
+                      appContext: context,
+                      length: 6,
+                      onChanged: (value) {
+                        // Handle OTP value changes
+                      },
+                      pinTheme: PinTheme(
+                        shape: PinCodeFieldShape.box,
+                        borderRadius: BorderRadius.circular(5),
+                        fieldHeight: 50,
+                        fieldWidth: 40,
+                        activeFillColor: Colors.white,
+                      ),
+                      keyboardType: TextInputType.number,
+                      animationType: AnimationType.fade,
+                      animationDuration: Duration(milliseconds: 300),
+                      autoFocus: true,
+                      textStyle: TextStyle(fontSize: 20.0),
+                      cursorColor: Colors.black,
+                      autoDisposeControllers: false,
+                      enablePinAutofill: true, // Enable auto-fill for OTP
+                      // You can add more parameters and callbacks as per your requirement
+                    ),
+                    SizedBox(height: 20.0),
+                  ],
+                ),
+              ),              const SizedBox(
                 height: 20,
               ),
               Padding(
@@ -108,7 +116,7 @@ class _MyVerifyState extends State<MyVerify> {
                     padding: const EdgeInsets.only(top: 18.0),
                     child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                            primary:  Color(0xFF222B40),
+                            primary:  Colors.orange,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10))),
                         onPressed: () {

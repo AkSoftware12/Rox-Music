@@ -1,10 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../Service/MusicService.dart';
 import '../constants/firestore_constants.dart';
 
 class AuthService {
-
+  MusicService musicService = MusicService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn googleSignIn = GoogleSignIn();
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
@@ -55,6 +56,7 @@ class AuthService {
 
   Future<void> logout() async {
     await _googleSignIn.signOut();
+    musicService.stopSong();
 
     // Clear login status
     SharedPreferences prefs = await SharedPreferences.getInstance();

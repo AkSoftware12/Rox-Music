@@ -45,8 +45,12 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
   bool download = false;
   int selectIndex = 0;
   String searchQuery = '';
-
+  String id = '';
+  String nickname = '';
+  String aboutMe = '';
   String photoUrl = '';
+  String userEmail = '';
+
 
 
   // Home All List model class
@@ -732,14 +736,19 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
   Future<void> readLocal() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
+      id = prefs.getString(FirestoreConstants.id) ?? "";
+      nickname = prefs.getString(FirestoreConstants.nickname) ?? "";
       photoUrl = prefs.getString(FirestoreConstants.photoUrl) ?? "";
+      userEmail = prefs.getString(FirestoreConstants.userEmail) ?? "";
     });
 
 
   }
 
+
   @override
   Widget build(BuildContext context) {
+    final colorTheme = Theme.of(context).colorScheme;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
@@ -748,176 +757,190 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
         length: 2, // Number of tabs
         child: Scaffold(
           // backgroundColor: const Color(0xFF222B40),
-          backgroundColor:  Colors.black,
+          backgroundColor:  colorTheme.onBackground,
 
           // Existing Scaffold code...
           body: CustomScrollView(
             slivers: [
-              SliverAppBar(
-                pinned: true,
-                stretch: true,
-                expandedHeight: 40,
-                // backgroundColor: const Color(0xFF222B40),
-                backgroundColor:  Colors.black,
-                onStretchTrigger: () async {
-                  // await Server.requestNewData();
-                },
-                flexibleSpace: FlexibleSpaceBar(
-                  title: Padding(
-                    padding:
-                        const EdgeInsets.only(top: 45.0, left: 10, right: 15),
-                    child: Container(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 0.0),
-                            child: SizedBox(
-                              width: 50,
-                              child: GestureDetector(
-                                onTap: () {
-
-                                },
-                                child: Container(
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(30),
-                                    child: Image.network(
-                                      photoUrl,
-                                      fit: BoxFit.cover,
-                                      width: 50,
-                                      height: 50,
-                                      errorBuilder: (context, object, stackTrace) {
-                                        return Icon(
-                                          Icons.account_circle,
-                                          size: 50,
-                                          color: ColorConstants.greyColor,
-                                        );
-                                      },
-                                    )
-                                  )
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 250,
-                            child: Container(
-                              height: 40,
-                              decoration: BoxDecoration(
-                                //This is for background color
-                                color: Colors.white.withOpacity(0.0),
-                                //This is for bottom border that is needed
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 2, vertical: 2),
-                                child: TabBar(
-                                  dividerColor: Colors.transparent,
-                                  onTap: (index) {
-                                    setState(() {
-                                      selectIndex = index;
-                                    });
-                                  },
-                                  labelPadding:
-                                      const EdgeInsets.symmetric(horizontal: 0),
-                                  indicator: BoxDecoration(),
-                                  controller: _tabController,
-                                  tabs: [
-                                    selectIndex != 0
-                                        ? const Text(
-                                            '$upComing ',
-                                            style: TextStyle(
-                                                color: gWhite, fontSize: 18),
-                                          )
-                                        : Container(
-                                            width: 130,
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                              // color: const Color(0xffe9e9e9)),
-                                              color: Colors.orange,
-                                            ),
-                                            child: const Center(
-                                              child: Text(
-                                                '$upComing',
-                                                style: TextStyle(
-                                                    color: gBlack,
-                                                    fontSize: 18),
-                                              ),
-                                            ),
-                                          ),
-                                    selectIndex != 1
-                                        ? const Text(
-                                            '$inProgress',
-                                            style: TextStyle(
-                                                color: gWhite, fontSize: 18),
-                                          )
-                                        : Container(
-                                            width: 130,
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                              // color: const Color(0xffe9e9e9)),
-                                              color: Colors.orange,
-                                            ),
-                                            child: const Center(
-                                              child: Text(
-                                                '$inProgress',
-                                                style: TextStyle(
-                                                    color: gBlack,
-                                                    fontSize: 18),
-                                              ),
-                                            ),
-                                          ),
-
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 35,
-                            child: Container(
-                              constraints: BoxConstraints.expand(height: 90),
-                              // Height of the tab bar
-                            ),
-                          ),
-                          SizedBox(
-                            width: 50,
-                            child: Container(
-                              constraints: BoxConstraints.expand(height: 90),
-                              // Height of the tab bar
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.settings,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) {
-                                        return SettingScreen();
-                                      },
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  titlePadding: EdgeInsets.only(top: 1),
-                  centerTitle: true,
-                  stretchModes: const <StretchMode>[
-                    StretchMode.zoomBackground,
-                    StretchMode.fadeTitle,
-                    StretchMode.blurBackground,
-                  ],
-                ),
-              ),
+              // SliverAppBar(
+              //   pinned: true,
+              //   stretch: true,
+              //   expandedHeight: 40,
+              //   // backgroundColor: const Color(0xFF222B40),
+              //   backgroundColor:  Colors.black,
+              //   onStretchTrigger: () async {
+              //     // await Server.requestNewData();
+              //   },
+              //   flexibleSpace: FlexibleSpaceBar(
+              //     title: Padding(
+              //       padding:
+              //           const EdgeInsets.only(top: 45.0, left: 10, right: 15),
+              //       child: Container(
+              //         child: Row(
+              //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //           children: [
+              //
+              //         RichText(
+              //         text: TextSpan(
+              //         text: 'Hi  ',
+              //           style: TextStyle(color: Colors.blue,fontSize: 20),
+              //           children: <TextSpan>[
+              //             TextSpan(
+              //               text: 'Ravikant saini',
+              //               style: TextStyle(color: Colors.orange),
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //
+              //             // Padding(
+              //             //   padding: const EdgeInsets.only(left: 0.0),
+              //             //   child: SizedBox(
+              //             //     width: 50,
+              //             //     child: GestureDetector(
+              //             //       onTap: () {
+              //             //
+              //             //       },
+              //             //       child: Container(
+              //             //         child: ClipRRect(
+              //             //           borderRadius: BorderRadius.circular(30),
+              //             //           child: Image.network(
+              //             //             photoUrl,
+              //             //             fit: BoxFit.cover,
+              //             //             width: 50,
+              //             //             height: 50,
+              //             //             errorBuilder: (context, object, stackTrace) {
+              //             //               return Icon(
+              //             //                 Icons.account_circle,
+              //             //                 size: 50,
+              //             //                 color: ColorConstants.greyColor,
+              //             //               );
+              //             //             },
+              //             //           )
+              //             //         )
+              //             //       ),
+              //             //     ),
+              //             //   ),
+              //             // ),
+              //             // SizedBox(
+              //             //   width: 250,
+              //             //   child: Container(
+              //             //     height: 40,
+              //             //     decoration: BoxDecoration(
+              //             //       //This is for background color
+              //             //       color: Colors.white.withOpacity(0.0),
+              //             //       //This is for bottom border that is needed
+              //             //     ),
+              //             //     child: Padding(
+              //             //       padding: const EdgeInsets.symmetric(
+              //             //           horizontal: 2, vertical: 2),
+              //             //       child: TabBar(
+              //             //         dividerColor: Colors.transparent,
+              //             //         onTap: (index) {
+              //             //           setState(() {
+              //             //             selectIndex = index;
+              //             //           });
+              //             //         },
+              //             //         labelPadding:
+              //             //             const EdgeInsets.symmetric(horizontal: 0),
+              //             //         indicator: BoxDecoration(),
+              //             //         controller: _tabController,
+              //             //         tabs: [
+              //             //           selectIndex != 0
+              //             //               ? const Text(
+              //             //                   '$upComing ',
+              //             //                   style: TextStyle(
+              //             //                       color: gWhite, fontSize: 18),
+              //             //                 )
+              //             //               : Container(
+              //             //                   width: 130,
+              //             //                   decoration: BoxDecoration(
+              //             //                     borderRadius:
+              //             //                         BorderRadius.circular(5),
+              //             //                     // color: const Color(0xffe9e9e9)),
+              //             //                     color: Colors.orange,
+              //             //                   ),
+              //             //                   child: const Center(
+              //             //                     child: Text(
+              //             //                       '$upComing',
+              //             //                       style: TextStyle(
+              //             //                           color: gBlack,
+              //             //                           fontSize: 18),
+              //             //                     ),
+              //             //                   ),
+              //             //                 ),
+              //             //           selectIndex != 1
+              //             //               ? const Text(
+              //             //                   '$inProgress',
+              //             //                   style: TextStyle(
+              //             //                       color: gWhite, fontSize: 18),
+              //             //                 )
+              //             //               : Container(
+              //             //                   width: 130,
+              //             //                   decoration: BoxDecoration(
+              //             //                     borderRadius:
+              //             //                         BorderRadius.circular(5),
+              //             //                     // color: const Color(0xffe9e9e9)),
+              //             //                     color: Colors.orange,
+              //             //                   ),
+              //             //                   child: const Center(
+              //             //                     child: Text(
+              //             //                       '$inProgress',
+              //             //                       style: TextStyle(
+              //             //                           color: gBlack,
+              //             //                           fontSize: 18),
+              //             //                     ),
+              //             //                   ),
+              //             //                 ),
+              //             //
+              //             //         ],
+              //             //       ),
+              //             //     ),
+              //             //   ),
+              //             // ),
+              //             // SizedBox(
+              //             //   width: 35,
+              //             //   child: Container(
+              //             //     constraints: BoxConstraints.expand(height: 90),
+              //             //     // Height of the tab bar
+              //             //   ),
+              //             // ),
+              //             // SizedBox(
+              //             //   width: 50,
+              //             //   child: Container(
+              //             //     constraints: BoxConstraints.expand(height: 90),
+              //             //     // Height of the tab bar
+              //             //     child: IconButton(
+              //             //       icon: Icon(
+              //             //         Icons.settings,
+              //             //         color: Colors.white,
+              //             //       ),
+              //             //       onPressed: () {
+              //             //         Navigator.push(
+              //             //           context,
+              //             //           MaterialPageRoute(
+              //             //             builder: (context) {
+              //             //               return SettingScreen();
+              //             //             },
+              //             //           ),
+              //             //         );
+              //             //       },
+              //             //     ),
+              //             //   ),
+              //             // ),
+              //           ],
+              //         ),
+              //       ),
+              //     ),
+              //     titlePadding: EdgeInsets.only(top: 1),
+              //     centerTitle: true,
+              //     stretchModes: const <StretchMode>[
+              //       StretchMode.zoomBackground,
+              //       StretchMode.fadeTitle,
+              //       StretchMode.blurBackground,
+              //     ],
+              //   ),
+              // ),
               SliverFillRemaining(
                 child: TabBarView(
                   controller: _tabController,
@@ -926,6 +949,49 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
                     SingleChildScrollView(
                       child: Column(
                         children: [
+
+                          Padding(
+                            padding: const EdgeInsets.only(top: 48.0),
+                            child: SizedBox(
+                              height: 50,
+                              child: Column(children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 0.0),
+                                  child: SizedBox(
+                                    height: 50,
+                                    child: ListView.builder(
+                                        itemCount: 1,
+                                        scrollDirection: Axis.horizontal,
+                                        itemBuilder: (context, index) {
+                                          return Row(
+                                              mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Padding(
+                                                  padding: const EdgeInsets.only(
+                                                      left: 10.0),
+                                                  child: RichText(
+                                                    text: TextSpan(
+                                                      text: 'Hi  ',
+                                                      style: TextStyle(color: Colors.blue,fontSize: 20),
+                                                      children: <TextSpan>[
+                                                        TextSpan(
+                                                          text: nickname,
+                                                          style: TextStyle(color: Colors.orange),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ]);
+                                        }),
+                                  ),
+                                ),
+                              ]),
+                            ),
+                          ),
+
+
                           //  recently view all
                           SizedBox(
                             height: 50,
@@ -1034,13 +1100,13 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
-                                                                        15.0),
+                                                                        1.0),
                                                           ),
                                                           child: ClipRRect(
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
-                                                                        10.0),
+                                                                        1.0),
                                                             // Adjust the radius as needed
                                                             // child: Image.network(
                                                             //   songs[index].metas.image!.path,
@@ -1219,13 +1285,13 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
                                                             borderRadius:
                                                             BorderRadius
                                                                 .circular(
-                                                                15.0),
+                                                                1.0),
                                                           ),
                                                           child: ClipRRect(
                                                             borderRadius:
                                                             BorderRadius
                                                                 .circular(
-                                                                10.0),
+                                                                1.0),
                                                             // Adjust the radius as needed
                                                             child:
                                                             Image.network(
@@ -1403,13 +1469,13 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
-                                                                        15.0),
+                                                                        1.0),
                                                           ),
                                                           child: ClipRRect(
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
-                                                                        10.0),
+                                                                        1.0),
                                                             // Adjust the radius as needed
                                                             child:
                                                                 Image.network(
@@ -1764,13 +1830,13 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
-                                                                        15.0),
+                                                                        1.0),
                                                           ),
                                                           child: ClipRRect(
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
-                                                                        10.0),
+                                                                        1.0),
                                                             // Adjust the radius as needed
                                                             child:
                                                                 Image.network(
@@ -1941,13 +2007,13 @@ class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderSta
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
-                                                                        15.0),
+                                                                        1.0),
                                                           ),
                                                           child: ClipRRect(
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
-                                                                        10.0),
+                                                                        1.0),
                                                             // Adjust the radius as needed
                                                             child:
                                                                 Image.network(

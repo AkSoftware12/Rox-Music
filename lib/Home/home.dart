@@ -1,22 +1,13 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:music_player_saavn/OfflineSongs/presentation/pages/home/home_page.dart';
-import 'package:on_audio_query/on_audio_query.dart';
 import '../Demo/ak.dart';
-import '../Demo/profile_demo.dart';
-import '../Model/recentaly.dart';
-import '../OfflineSongs/presentation/pages/artist_page.dart';
-import '../OfflineSongs/presentation/pages/splash_page.dart';
 import '../Service/MusicService.dart';
 import 'Home Bottom/miniplayer.dart';
 import 'Home Bottom/player.dart';
 import 'Home Bottom/src/weslide.dart';
 import 'Home Bottom/src/weslide_controller.dart';
-import 'Home Screen/home_screen.dart';
 import 'My Library/my_library.dart';
 import 'My PlayList/my_playlist.dart';
-import 'Offline Music/offline_music.dart';
 import 'Offline Music/offline_music_tab.dart';
 import 'Search/search.dart';
 
@@ -69,10 +60,10 @@ class _BottomNavBarDemoState extends State<MyHomePage> with SingleTickerProvider
         ),
         // panel: PlayerScreen(onTap: _controller.hide),
         footer: BottomNavigationBar(
-          // backgroundColor: const Color(0xFF222B40),
-          backgroundColor:  Colors.black,
+          backgroundColor: const Color(0xFF222B40),
+          // backgroundColor:  Colors.black,
           // backgroundColor: Color(0xEE2B2E2F),
-          unselectedItemColor: Colors.grey,
+          unselectedItemColor: Colors.white,
           showSelectedLabels: true,
           currentIndex: _currentIndex,
           type: BottomNavigationBarType.fixed,
@@ -89,7 +80,7 @@ class _BottomNavBarDemoState extends State<MyHomePage> with SingleTickerProvider
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.library_music),
-              label: 'My Library',
+              label: 'Profile',
               backgroundColor: Colors.orange,
             ),
             BottomNavigationBarItem(
@@ -104,9 +95,9 @@ class _BottomNavBarDemoState extends State<MyHomePage> with SingleTickerProvider
             ),
           ],
 
-          selectedLabelStyle: TextStyle(color: Colors.white),
-          selectedItemColor: Colors.white,
-          unselectedLabelStyle: TextStyle(color: Colors.grey),
+          selectedLabelStyle: TextStyle(color: Colors.orange),
+          selectedItemColor: Colors.orange,
+          unselectedLabelStyle: TextStyle(color: Colors.white),
           onTap: (index) {
             setState(() {
               _currentIndex = index;
