@@ -186,7 +186,6 @@ class PhoneNumberState extends State<PhoneNumber> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30.0),
                           ),
-                          primary: Colors.purple,
                           padding: EdgeInsets.all(12),
                           textStyle: TextStyle(
                               color: ColorConstants.greyColor, fontWeight: FontWeight.w400)),
@@ -229,7 +228,7 @@ class PhoneNumberState extends State<PhoneNumber> {
                         height: 55,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            primary: Colors.white, // Set the background color here
+                            backgroundColor: Colors.white, // Set the background color here
                           ),
 
                           onPressed: () async {

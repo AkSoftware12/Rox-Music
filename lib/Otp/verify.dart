@@ -116,7 +116,7 @@ class _MyVerifyState extends State<MyVerify> {
                     padding: const EdgeInsets.only(top: 18.0),
                     child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                            primary:  Colors.orange,
+                            backgroundColor: Colors.orange,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10))),
                         onPressed: () {
