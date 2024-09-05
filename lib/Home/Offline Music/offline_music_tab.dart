@@ -1,8 +1,9 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:music_player_saavn/Home/Home%20View%20All/trending_now_view_all.dart';
+import 'package:on_audio_query/on_audio_query.dart';
 
 import '../../Demo/Core/app_globals.dart';
 import '../../OfflineSongs/presentation/pages/home/views/albums_view.dart';
@@ -22,31 +23,39 @@ class _DashBoardScreenState extends State<OfflineMusicTabScreen> with SingleTick
   TabController? _tabController;
 
   int selectIndex = 0;
+  final OnAudioQuery _audioQuery = OnAudioQuery();
+  bool _hasPermission = false;
 
 
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-        length: 4,
-        vsync: this); // Adjust the length based on the number of tabs you want
+    _tabController = TabController(length: 4, vsync: this);
+
+    LogConfig logConfig = LogConfig(logType: LogType.DEBUG);
+    _audioQuery.setLogConfig(logConfig);
   }
 
+  checkAndRequestPermissions({bool retry = false}) async {
+    _hasPermission = await _audioQuery.checkAndRequest(
+      retryRequest: retry,
+    );
+    _hasPermission ? setState(() {}) : null;
+  }
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
+    return DefaultTabController(
+      length: 4, // Number of tabs
+      child: Scaffold(
+        // backgroundColor: const Color(0xFF222B40),
+        backgroundColor:  Colors.black,
 
-      // Existing MaterialApp code...
-      home: DefaultTabController(
-        length: 4, // Number of tabs
-        child: Scaffold(
-          // backgroundColor: const Color(0xFF222B40),
-          backgroundColor:  Colors.black,
-
-          // Existing Scaffold code...
-          body: CustomScrollView(
+        // Existing Scaffold code...
+        body: Center(
+          child: !_hasPermission
+              ? noAccessToLibraryWidget()
+              :CustomScrollView(
             slivers: [
               SliverAppBar(
                 pinned: true,
@@ -68,9 +77,9 @@ class _DashBoardScreenState extends State<OfflineMusicTabScreen> with SingleTick
                           title: Text(
                             'OffLine Songs',
                             style: GoogleFonts.poppins(
-                              textStyle: const TextStyle(
+                              textStyle:  TextStyle(
                                   color: Colors.white,
-                                  fontSize: 22,
+                                  fontSize: 20.sp,
                                   fontWeight: FontWeight.normal),
                             ),
                           ),
@@ -233,6 +242,27 @@ class _DashBoardScreenState extends State<OfflineMusicTabScreen> with SingleTick
       ),
     );
   }
+  Widget noAccessToLibraryWidget() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: Colors.redAccent.withOpacity(0.5),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text("Application doesn't have access to the library"),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () => checkAndRequestPermissions(retry: true),
+            child: const Text("Allow"),
+          ),
+        ],
+      ),
+    );
+  }
+
 }
 
 class ConstantScrollBehavior extends ScrollBehavior {

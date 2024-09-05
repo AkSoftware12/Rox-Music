@@ -1,3007 +1,2905 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+import 'package:animations/animations.dart';
+import 'package:audio_service/audio_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:music_player_saavn/Home/Home%20View%20All/trending_now_view_all.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:music_player_saavn/Home/Home%20Bottom/player.dart';
+import 'package:music_player_saavn/Utils/textSize.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../Home/Home View All/Music viewAll/Top_song_view_all.dart';
-import '../Home/Home View All/Music viewAll/bollywood_song_view_all.dart';
-import '../Home/Home View All/Music viewAll/haryanvi_song_view_all.dart';
-import '../Home/Home View All/Music viewAll/punjabi_song_view_all.dart';
-import '../Home/Home View All/Music viewAll/trending_song_view_all.dart';
-import '../Home/Home View All/bollywood_masala_view_all.dart';
-import '../Home/Home View All/new_releaees_view_all.dart';
-import '../Home/Home View All/recently_songs.dart';
-import '../Home/Home View All/top_chart_view_all.dart';
+import '../ApiModel/playModel.dart';
+import '../ApiModel/playlist.dart';
+import '../CatergoryViewAll/catergory_viewAll.dart';
+import '../Download/download.dart';
+import '../Home/Home View All/All_tab_view_all.dart';
 import '../Home/HomeDeatils/home_deatils_song_list.dart';
-import '../Model/Music/bollywood_songs.dart';
-import '../Model/Music/haryanvi.dart';
-import '../Model/Music/punjabi.dart';
-import '../Model/Music/top_hind_songs.dart';
-import '../Model/Music/trendings_songs.dart';
-import '../Model/artist.dart';
-import '../Model/last.dart';
-import '../Model/new_releasse.dart';
-import '../Model/recentaly.dart';
-import '../Model/top_charts.dart';
-import '../Model/trending.dart';
-import '../Seetings/settings.dart';
+import '../Home/HomeDeatils/song_deatils.dart';
+import '../Home/home.dart';
 import '../Service/MusicService.dart';
+import '../Themes/colors.dart';
+import '../TodayText/home_deatils_song_list_today.dart';
+import '../baseurlp/baseurl.dart';
 import '../constants/color_constants.dart';
-import '../constants/firestore_constants.dart';
-import 'Core/app_globals.dart';
 
 class AkScreen extends StatefulWidget {
-  const AkScreen({super.key});
+  const AkScreen({
+    super.key,
+  });
 
   @override
   _DashBoardScreenState createState() => _DashBoardScreenState();
 }
 
 class _DashBoardScreenState extends State<AkScreen> with SingleTickerProviderStateMixin {
-  MusicService musicService = MusicService();
-  TabController? _tabController;
-  bool isDrawerOpen = false;
+  PageController _pageController = PageController(initialPage: 0);
 
+  int _selectedIndex = 0;
   bool isLiked = false;
   bool download = false;
   int selectIndex = 0;
-  String searchQuery = '';
-  String id = '';
-  String nickname = '';
-  String aboutMe = '';
-  String photoUrl = '';
-  String userEmail = '';
-
-
-
-  // Home All List model class
-  List<RecentlySongs> recently = [
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/255/802bd5104b367a501584c9955910168b_96.mp4',
-        title: 'Hamein Tumse Hua Pyar',
-        subtitle: 'Hamein Tumse Hua Pyar',
-        image:
-            'https://c.saavncdn.com/255/Ab-Tumhare-Hawale-Watan-Sathiyo-Hindi-2004-20221118021108-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/113/6618ccbc327d1f238da8de775e07a693_96.mp4',
-        title: 'He Shiv Shankar',
-        subtitle: 'Satish Dehra',
-        image:
-            'https://c.saavncdn.com/113/He-Shiv-Shankar-Hindi-2020-20200214121917-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/905/bb762b053b0704eb6a75be040e208c69_96.mp4',
-        title: 'Tujhe Yaad Na Meri Ayee-2',
-        subtitle: 'Tujhe Yaad Na Meri Ayee-2',
-        image:
-            'https://c.saavncdn.com/905/Tujhe-Yaad-Na-Meri-Ayee-2-Hindi-2023-20231107133527-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/529/34fec258d486adfae4d5faf460e6b519_96.mp4',
-        title: 'Shiv Shankara',
-        subtitle: 'Shreyas Puranik',
-        image:
-            'https://c.saavncdn.com/529/Shiv-Shankara-Hindi-2019-20190228184236-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/318/1feec2b62321a4cbb9b5a29e179768b9_96.mp4',
-        title: 'Pehli Pehli Baar Mohabbat Ki Hai',
-        subtitle: 'Pehli Pehli Baar Mohabbat Ki Hai',
-        image:
-            'https://c.saavncdn.com/318/Sirf-Tum-Hindi-1999-20221205181935-500x500.jpg'),
-    RecentlySongs(
-        url:
-            "https://aac.saavncdn.com/088/64ec11ed2a357085a5c598b91e18723c_96.mp4",
-        title: "Jaan - E - Jigar Jaaneman",
-        subtitle: "Jaan - E - Jigar Jaaneman",
-        image:
-            "https://c.saavncdn.com/088/Aashiqui-Hindi-1989-20221118014024-500x500.jpg"),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/120/1fa9e474ab4df104cb3deecabd2ec342_96.mp4',
-        title: 'Man Mera Mandir,Shiv Meri Puja',
-        subtitle: 'Sameer Sen, Dilip Sen, Anuradha Paudwal',
-        image: 'https://c.saavncdn.com/120/Shiv-Aaradhna-1991-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/122/b8bc2c1a0de0010582dfdb33a1f06436_96.mp4',
-        title: 'Shiv Amritvaani',
-        subtitle: 'Surender Kohli, Anuradha Paudwal',
-        image: 'https://c.saavncdn.com/122/Shiv-Amritvani-1999-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/256/f912a4f10ab5505d5f80d7c87cdc23ab_96.mp4',
-        title: 'Shree Hanuman Chalisa',
-        subtitle: 'Hariharan - Shree Hanuman Chalisa (Hanuman Ashtak)',
-        image:
-            'https://c.saavncdn.com/256/Shree-Hanuman-Chalisa-Hanuman-Ashtak-Hindi-1992-20230904173628-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/835/4af7820e1519cc777b4bcb6549e23af2_96.mp4',
-        title: 'Bajrang Baan',
-        subtitle: 'Suresh Wadkar - Hanuman Chalisa',
-        image:
-            'https://c.saavncdn.com/835/Hanuman-Chalisa-Hindi-2016-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/222/fd095a4516b3a78ee065ea4e391ad39f_96.mp4',
-        title: 'Hanuman Aarti',
-        subtitle:
-            'Anup Jalota - Shree Ram Bhakt Hanuman Chalisa With Transcreation',
-        image:
-            'https://c.saavncdn.com/222/Shree-Ram-Bhakt-Hanuman-Chalisa-With-Transcreation-Telugu-2016-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/228/d28a57ac4d8bbc4bdc0dba65795c7add_96.mp4',
-        title: 'Main Nikla Gaddi Leke',
-        subtitle: 'Main Nikla Gaddi Leke',
-        image:
-            'https://c.saavncdn.com/228/Gadar-Ek-Prem-Katha-Hindi-2001-20230811123918-500x500.jpg'),
-    RecentlySongs(
-      url:
-          "https://aac.saavncdn.com/026/3687b7ddfa714fcd3d7e1a4af95ead4e_96.mp4",
-      title: "Chaleya (From \"Jawan\")",
-      subtitle: "Chaleya (From \"Jawan\")",
-      image:
-          "https://c.saavncdn.com/026/Chaleya-From-Jawan-Hindi-2023-20230814014337-500x500.jpg",
-    ),
-  ];
-  List<LastSongs> lastSongs = [
-    LastSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image: "https://f4.bcbits.com/img/a0029673845_16.jpg"),
-    LastSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image: 'https://f4.bcbits.com/img/a3819056082_16.jpg'),
-    LastSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image: "https://f4.bcbits.com/img/a2487127244_16.jpg"),
-    LastSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image: 'https://f4.bcbits.com/img/a4090357764_16.jpg'),
-    LastSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image: "https://f4.bcbits.com/img/a4251419452_16.jpg"),
-    LastSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: "B Praak, Jaani, Jatin-Lalit - Tujhe Yaad Na Meri Ayee-2",
-        image:
-            'https://c.saavncdn.com/256/Shree-Hanuman-Chalisa-Hanuman-Ashtak-Hindi-1992-20230904173628-500x500.jpg'),
-    LastSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            "https://c.saavncdn.com/905/Tujhe-Yaad-Na-Meri-Ayee-2-Hindi-2023-20231107133527-500x500.jpg"),
-    LastSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: "B Praak, Jaani, Jatin-Lalit - Tujhe Yaad Na Meri Ayee-2",
-        image:
-            'https://c.saavncdn.com/256/Shree-Hanuman-Chalisa-Hanuman-Ashtak-Hindi-1992-20230904173628-500x500.jpg'),
-  ];
-  List<ArtistSongs> artistSongs = [
-    ArtistSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Hansraj',
-        image:
-            "https://c.saavncdn.com/artists/Hansraj_Raghuwanshi_001_20220916054832_500x500.jpg"),
-    ArtistSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Arijit Singh',
-        image:
-            "https://c.saavncdn.com/artists/Arijit_Singh_002_20230323062147_500x500.jpg"),
-    ArtistSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Neha Kakkar',
-        image:
-            "https://c.saavncdn.com/artists/Neha_Kakkar_006_20200822042626_500x500.jpg"),
-    ArtistSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Badshah',
-        image:
-            "https://c.saavncdn.com/artists/Badshah_005_20230608084021_500x500.jpg"),
-    ArtistSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Lata Mangeshkar',
-        image:
-            "https://c.saavncdn.com/artists/Lata_Mangeshkar_004_20230623105323_500x500.jpg"),
-    ArtistSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Sonu Nigam',
-        image: "https://c.saavncdn.com/artists/Sonu_Nigam_500x500.jpg"),
-    ArtistSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Himesh Reshammiya',
-        image: "https://c.saavncdn.com/artists/Himesh_Reshammiya_500x500.jpg"),
-    ArtistSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Alia Bhatt',
-        image: "https://c.saavncdn.com/artists/Alia_Bhatt_500x500.jpg"),
-  ];
-  List<TrendingSongs> trendingSongs = [
-    TrendingSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Only Khushiyaan',
-        image:
-            "https://c.saavncdn.com/editorial/OnlyKhushiyaan_20231117032829.jpg?bch=1702977020"),
-    TrendingSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Mahalaxmi Mantra',
-        image:
-            "https://c.saavncdn.com/153/Mahalaxmi-Mantra-Hindi-2005-20230508104311-500x500.jpg"),
-    TrendingSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Jawan',
-        image:
-            "https://c.saavncdn.com/047/Jawan-Hindi-2023-20230921190854-500x500.jpg"),
-    TrendingSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Aashiqon ki Mehfil',
-        image:
-            "https://c.saavncdn.com/843/Aashiqon-ki-Mehfil-Hindi-2023-20231208123453-500x500.jpg"),
-    TrendingSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Starfish',
-        image:
-            "https://c.saavncdn.com/115/Starfish-Hindi-2023-20231122161004-500x500.jpg"),
-    TrendingSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Kho Gaye Hum Kahan',
-        image:
-            "https://c.saavncdn.com/773/Kho-Gaye-Hum-Kahan-Hindi-2023-20231208120916-500x500.jpg"),
-    TrendingSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'ANIMAL',
-        image:
-            "https://c.saavncdn.com/092/ANIMAL-Hindi-2023-20231124191036-500x500.jpg"),
-    TrendingSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Farrey',
-        image:
-            "https://c.saavncdn.com/120/Farrey-Hindi-2023-20231120143048-500x500.jpg"),
-  ];
-  List<TopChartSongs> topchartSongs = [
-    TopChartSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Superhits Top 50',
-        image:
-            "https://c.saavncdn.com/editorial/Hindi-IndiaSuperhitsTop50_20231201043314.jpg?bch=1702628462"),
-    TopChartSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Charts Trending Today',
-        image:
-            "https://c.saavncdn.com/editorial/charts_TrendingToday_134351_20230826113717.jpg?bch=1696856401"),
-    TopChartSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'CHARTS SAAVN',
-        image:
-            "http://c.saavncdn.com/editorial/charts_CHARTS_SAAVN_hindi_2000s_139784_20230711094322.jpg?bch=1696867250"),
-    TopChartSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Delhi Hot 50',
-        image:
-            "https://c.saavncdn.com/editorial/charts_DelhiHot50_151698_20220311195731.jpg?bch=1502438867"),
-    TopChartSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'India Superhits Top 50',
-        image:
-            "https://c.saavncdn.com/editorial/IndiaSuperhitsTop50_20231201053857.jpg?bch=1702623930"),
-    TopChartSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Romantic Top 40',
-        image:
-            "https://c.saavncdn.com/editorial/charts_RomanticTop40_167985_20220311173413.jpg?bch=1696856401"),
-    TopChartSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Hindi 1990s',
-        image:
-            "https://c.saavncdn.com/editorial/charts_CHARTS_SAAVN_hindi_1990s_175982_20230711094900.jpg?bch=1696867249"),
-    TopChartSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Hindi 1970s',
-        image:
-            "https://c.saavncdn.com/editorial/charts_Hindi1970s_180599_20230713045713.jpg?bch=1696867248")
-  ];
-  List<NewReleasseSongs> newReleasseSongs = [
-    NewReleasseSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Pakeezah',
-        image:
-            "https://c.saavncdn.com/205/Pakeezah-From-Do-Ajnabee-Hindi-2023-20231023153010-500x500.jpg"),
-    NewReleasseSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Pyaar Hai Toh Hai',
-        image:
-            "https://c.saavncdn.com/781/Pyaar-Hai-Toh-Hai-Hindi-2023-20231027235523-500x500.jpg"),
-    NewReleasseSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Barse Re From Manush',
-        image:
-            "https://c.saavncdn.com/057/Barse-Re-From-Manush-Hindi-Hindi-2023-20231113122507-500x500.jpg"),
-    NewReleasseSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Pippa',
-        image:
-            "https://c.saavncdn.com/172/Pippa-Hindi-2023-20231113184331-500x500.jpg"),
-    NewReleasseSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Farrey',
-        image:
-            "https://c.saavncdn.com/120/Farrey-Hindi-2023-20231120143048-500x500.jpg"),
-    NewReleasseSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Tiger 3',
-        image:
-            "https://c.saavncdn.com/616/Tiger-3-Hindi-2023-20231206092502-500x500.jpg"),
-    NewReleasseSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'Ishq Nahi Aasan',
-        image:
-            "https://c.saavncdn.com/216/Ishq-Nahi-Aasan-From-Anari-Is-Backk-Hindi-2023-20231207111403-500x500.jpg"),
-    NewReleasseSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'The Archies',
-        image:
-            "https://c.saavncdn.com/744/The-Archies-Hindi-2023-20231127202131-500x500.jpg")
-  ];
-
-  // Music model class
-  List<BollywoodSongs> bollywoodSongs = [
-    BollywoodSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: "B Praak, Jaani, Jatin-Lalit - Tujhe Yaad Na Meri Ayee-2",
-        image: 'https://wallpapercave.com/wp/wp5510430.jpg'),
-    BollywoodSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image: "https://media.timeout.com/images/102136087/image.jpg"),
-    BollywoodSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            'https://img.mensxp.com/media/content/2020/Jun/Bollywood-Songs-Shot-In-Royal-Palaces1200_5ef079279d525.jpeg'),
-    BollywoodSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: "B Praak, Jaani, Jatin-Lalit - Tujhe Yaad Na Meri Ayee-2",
-        image:
-            'https://i.scdn.co/image/ab67616d0000b27399dcaf80953b083cc7139a5f'),
-    BollywoodSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            "https://www.saregama.com/blog/wp-content/uploads/2021/04/Evolution-of-Bollywood-Song-Lyrics-1200x675.jpg"),
-    BollywoodSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            'https://images.news18.com/ibnlive/uploads/2022/03/gulabi-song-1.jpg'),
-    BollywoodSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image: "https://i.ytimg.com/vi/IYDm2KWDHo4/maxresdefault.jpg"),
-    BollywoodSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            "https://i0.wp.com/www.awaradiaries.com/wp-content/uploads/2018/07/Filimg-Locations-of-Top-Bollywood-Songs.jpg?fit=1200%2C800&ssl=1"),
-  ];
-  List<TrendingsSongs> trendingsSongs = [
-    TrendingsSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            "https://blog.byoh.in/wp-content/uploads/2016/04/Romantic-Bollywood-Songs.jpg"),
-    TrendingsSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            "https://stat5.bollywoodhungama.in/wp-content/uploads/2016/04/99-Songs-3-306x393.jpg"),
-    TrendingsSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            "https://browngirlmagazine.com/wp-content/uploads/2018/01/Rab-Ne-Bana-Di-Jodi-Bollywood-Songs.jpg"),
-    TrendingsSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            "https://img.mensxp.com/media/content/2019/Apr/bollywood-songs-which-turn-10-years-old-in-20191200-1555074788.jpg"),
-    TrendingsSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            "https://images.herzindagi.info/image/2022/Apr/early-2000s-songs-main.jpg"),
-    TrendingsSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image: "assets/shiv4.jpg"),
-    TrendingsSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image: "assets/maa1.jpg"),
-    TrendingsSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image: "assets/maa2.jpg"),
-  ];
-  List<PunjabiSongs> punjabiSongs = [
-    PunjabiSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: "B Praak, Jaani, Jatin-Lalit - Tujhe Yaad Na Meri Ayee-2",
-        image: 'https://f4.bcbits.com/img/a1452248449_16.jpg'),
-    PunjabiSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            "https://mir-s3-cdn-cf.behance.net/projects/max_808_webp/4899f7183645667.Y3JvcCwyNjkyLDIxMDUsOTksMjI2.jpg"),
-    PunjabiSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            'https://mir-s3-cdn-cf.behance.net/projects/max_808_webp/5eac77186141461.Y3JvcCwxMjI4LDk2MSwxMzYsMA.jpg'),
-    PunjabiSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: "B Praak, Jaani, Jatin-Lalit - Tujhe Yaad Na Meri Ayee-2",
-        image:
-            'https://mir-s3-cdn-cf.behance.net/projects/max_808_webp/1e9703186308903.Y3JvcCwxMDgwLDg0NCwwLDExNw.jpg'),
-    PunjabiSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            "https://mir-s3-cdn-cf.behance.net/projects/max_808_webp/1a689c186046727.656eb6b4d6763.jpg"),
-    PunjabiSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            'https://t4.ftcdn.net/jpg/04/73/45/75/240_F_473457554_c79tvqr3digVdHHOSZAtVvfefvjPjkla.jpg'),
-    PunjabiSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            'https://t3.ftcdn.net/jpg/03/99/89/10/240_F_399891068_HnVlhQGTT6N4vWGCW8U8NSSB0nHWAqII.jpg'),
-    PunjabiSongs(
-        url:
-            'https://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3',
-        title: 'title',
-        image:
-            "https://mir-s3-cdn-cf.behance.net/projects/max_808_webp/68115a180336939.Y3JvcCw4MDgsNjMyLDE1OCww.jpg"),
-  ];
-  List<HaryanviSongs> haryanviSongs = [
-    HaryanviSongs(
-        url:
-            'https://aac.saavncdn.com/113/6618ccbc327d1f238da8de775e07a693_96.mp4',
-        title: 'He Shiv Shankar',
-        subtitle: 'Satish Dehra',
-        image:
-            'https://c.saavncdn.com/editorial/logo/DanceHits2021Haryanvi_20211206180419.jpg?bch=1698158461'),
-    HaryanviSongs(
-        url:
-            'https://aac.saavncdn.com/529/34fec258d486adfae4d5faf460e6b519_96.mp4',
-        title: 'Shiv Shankara',
-        subtitle: 'Shreyas Puranik',
-        image:
-            'https://c.saavncdn.com/059/Loot-Liya-Haryanvi-2021-20210313013657-500x500.jpg'),
-    HaryanviSongs(
-        url:
-            'https://aac.saavncdn.com/120/1fa9e474ab4df104cb3deecabd2ec342_96.mp4',
-        title: 'Man Mera Mandir,Shiv Meri Puja',
-        subtitle: 'Sameer Sen, Dilip Sen, Anuradha Paudwal',
-        image:
-            'https://c.saavncdn.com/635/Ghungroo-Hindi-2021-20210414141141-500x500.jpg'),
-    HaryanviSongs(
-        url:
-            'https://aac.saavncdn.com/122/b8bc2c1a0de0010582dfdb33a1f06436_96.mp4',
-        title: 'Shiv Amritvaani',
-        subtitle: 'Surender Kohli, Anuradha Paudwal',
-        image:
-            'https://c.saavncdn.com/069/Badnam-Gabru-Haryanvi-2021-20210218144354-500x500.jpg'),
-    HaryanviSongs(
-        url:
-            'https://aac.saavncdn.com/256/f912a4f10ab5505d5f80d7c87cdc23ab_96.mp4',
-        title: 'Shree Hanuman Chalisa',
-        subtitle: 'Hariharan - Shree Hanuman Chalisa (Hanuman Ashtak)',
-        image:
-            'https://c.saavncdn.com/385/Heavy-Ghaghra-Haryanvi-2021-20210927204233-500x500.jpg'),
-    HaryanviSongs(
-        url:
-            'https://aac.saavncdn.com/835/4af7820e1519cc777b4bcb6549e23af2_96.mp4',
-        title: 'Bajrang Baan',
-        subtitle: 'Suresh Wadkar - Hanuman Chalisa',
-        image:
-            'https://c.saavncdn.com/785/Naam-Tera-Haryanvi-2021-20210821045947-500x500.jpg'),
-    HaryanviSongs(
-        url:
-            'https://aac.saavncdn.com/222/fd095a4516b3a78ee065ea4e391ad39f_96.mp4',
-        title: 'Hanuman Aarti',
-        subtitle:
-            'Anup Jalota - Shree Ram Bhakt Hanuman Chalisa With Transcreation',
-        image:
-            'https://c.saavncdn.com/978/Bp-High-Hindi-2021-20210323133538-500x500.jpg'),
-    HaryanviSongs(
-        url:
-            'https://aac.saavncdn.com/905/bb762b053b0704eb6a75be040e208c69_96.mp4',
-        title: 'Tujhe Yaad Na Meri Ayee-2',
-        subtitle: 'Tujhe Yaad Na Meri Ayee-2',
-        image:
-            'https://c.saavncdn.com/977/Superman-Jat-Punjabi-2021-20231007154044-500x500.jpg'),
-    HaryanviSongs(
-        url:
-            'https://aac.saavncdn.com/318/1feec2b62321a4cbb9b5a29e179768b9_96.mp4',
-        title: 'Pehli Pehli Baar Mohabbat Ki Hai',
-        subtitle: 'Pehli Pehli Baar Mohabbat Ki Hai',
-        image:
-            'https://c.saavncdn.com/020/Sulfa-Punjabi-2020-20200525134614-500x500.jpg'),
-    HaryanviSongs(
-        url:
-            'https://aac.saavncdn.com/255/802bd5104b367a501584c9955910168b_96.mp4',
-        title: 'Hamein Tumse Hua Pyar',
-        subtitle: 'Hamein Tumse Hua Pyar',
-        image:
-            'https://c.saavncdn.com/001/Chatak-Matak-Haryanvi-2020-20201221105140-500x500.jpg'),
-    HaryanviSongs(
-        url:
-            'https://aac.saavncdn.com/228/d28a57ac4d8bbc4bdc0dba65795c7add_96.mp4',
-        title: 'Main Nikla Gaddi Leke',
-        subtitle: 'Main Nikla Gaddi Leke',
-        image:
-            'https://c.saavncdn.com/175/Gajban-Hindi-2021-20231007134158-500x500.jpg'),
-    HaryanviSongs(
-        url:
-            "https://aac.saavncdn.com/088/64ec11ed2a357085a5c598b91e18723c_96.mp4",
-        title: "Jaan - E - Jigar Jaaneman",
-        subtitle: "Jaan - E - Jigar Jaaneman",
-        image:
-            "https://c.saavncdn.com/592/Kamar-Teri-Left-Right-Hale-Haryanvi-2022-20220414144503-500x500.jpg"),
-    HaryanviSongs(
-      url:
-          "https://aac.saavncdn.com/026/3687b7ddfa714fcd3d7e1a4af95ead4e_96.mp4",
-      title: "Chaleya (From \"Jawan\")",
-      subtitle: "Chaleya (From \"Jawan\")",
-      image:
-          "https://c.saavncdn.com/111/4-G-Ka-Jamana-Single-Hindi-2019-20190617084107-500x500.jpg",
-    ),
-  ];
-  List<TopHindiSongs> tophindiSongs = [
-    TopHindiSongs(
-        url:
-            'https://aac.saavncdn.com/113/6618ccbc327d1f238da8de775e07a693_96.mp4',
-        title: 'He Shiv Shankar',
-        subtitle: 'Satish Dehra',
-        image:
-            'https://c.saavncdn.com/590/Wajah-Tum-Ho-Hindi-2016-500x500.jpg'),
-    TopHindiSongs(
-        url:
-            'https://aac.saavncdn.com/529/34fec258d486adfae4d5faf460e6b519_96.mp4',
-        title: 'Shiv Shankara',
-        subtitle: 'Shreyas Puranik',
-        image:
-            'https://c.saavncdn.com/blob/461/Saajan-Hindi-1991-20220616044407-500x500.jpg'),
-    TopHindiSongs(
-        url:
-            'https://aac.saavncdn.com/120/1fa9e474ab4df104cb3deecabd2ec342_96.mp4',
-        title: 'Man Mera Mandir,Shiv Meri Puja',
-        subtitle: 'Sameer Sen, Dilip Sen, Anuradha Paudwal',
-        image: 'https://c.saavncdn.com/430/Aashiqui-2-Hindi-2013-500x500.jpg'),
-    TopHindiSongs(
-        url:
-            'https://aac.saavncdn.com/122/b8bc2c1a0de0010582dfdb33a1f06436_96.mp4',
-        title: 'Shiv Amritvaani',
-        subtitle: 'Surender Kohli, Anuradha Paudwal',
-        image:
-            'https://c.saavncdn.com/088/Aashiqui-Hindi-1989-20221118014024-500x500.jpg'),
-    TopHindiSongs(
-        url:
-            'https://aac.saavncdn.com/256/f912a4f10ab5505d5f80d7c87cdc23ab_96.mp4',
-        title: 'Shree Hanuman Chalisa',
-        subtitle: 'Hariharan - Shree Hanuman Chalisa (Hanuman Ashtak)',
-        image:
-            'https://c.saavncdn.com/807/Pathaan-Hindi-2022-20221222104158-500x500.jpg'),
-    TopHindiSongs(
-        url:
-            'https://aac.saavncdn.com/835/4af7820e1519cc777b4bcb6549e23af2_96.mp4',
-        title: 'Bajrang Baan',
-        subtitle: 'Suresh Wadkar - Hanuman Chalisa',
-        image:
-            'https://c.saavncdn.com/734/Champagne-Talk-Hindi-2022-20221008011951-500x500.jpg'),
-    TopHindiSongs(
-        url:
-            'https://aac.saavncdn.com/222/fd095a4516b3a78ee065ea4e391ad39f_96.mp4',
-        title: 'Hanuman Aarti',
-        subtitle:
-            'Anup Jalota - Shree Ram Bhakt Hanuman Chalisa With Transcreation',
-        image:
-            'https://c.saavncdn.com/807/Kabir-Singh-Hindi-2019-20190614075009-500x500.jpg'),
-    TopHindiSongs(
-        url:
-            'https://aac.saavncdn.com/905/bb762b053b0704eb6a75be040e208c69_96.mp4',
-        title: 'Tujhe Yaad Na Meri Ayee-2',
-        subtitle: 'Tujhe Yaad Na Meri Ayee-2',
-        image:
-            'https://c.saavncdn.com/348/Kisi-Ka-Bhai-Kisi-Ki-Jaan-Hindi-2023-20230427184704-500x500.jpg'),
-    TopHindiSongs(
-        url:
-            'https://aac.saavncdn.com/318/1feec2b62321a4cbb9b5a29e179768b9_96.mp4',
-        title: 'Pehli Pehli Baar Mohabbat Ki Hai',
-        subtitle: 'Pehli Pehli Baar Mohabbat Ki Hai',
-        image:
-            'https://c.saavncdn.com/238/Shershaah-Original-Motion-Picture-Soundtrack--Hindi-2021-20210815181610-500x500.jpg'),
-    TopHindiSongs(
-        url:
-            'https://aac.saavncdn.com/255/802bd5104b367a501584c9955910168b_96.mp4',
-        title: 'Hamein Tumse Hua Pyar',
-        subtitle: 'Hamein Tumse Hua Pyar',
-        image:
-            'https://c.saavncdn.com/001/Chatak-Matak-Haryanvi-2020-20201221105140-500x500.jpg'),
-    TopHindiSongs(
-        url:
-            'https://aac.saavncdn.com/228/d28a57ac4d8bbc4bdc0dba65795c7add_96.mp4',
-        title: 'Main Nikla Gaddi Leke',
-        subtitle: 'Main Nikla Gaddi Leke',
-        image:
-            'https://c.saavncdn.com/175/Gajban-Hindi-2021-20231007134158-500x500.jpg'),
-    TopHindiSongs(
-        url:
-            "https://aac.saavncdn.com/088/64ec11ed2a357085a5c598b91e18723c_96.mp4",
-        title: "Jaan - E - Jigar Jaaneman",
-        subtitle: "Jaan - E - Jigar Jaaneman",
-        image:
-            "https://c.saavncdn.com/592/Kamar-Teri-Left-Right-Hale-Haryanvi-2022-20220414144503-500x500.jpg"),
-    TopHindiSongs(
-      url:
-          "https://aac.saavncdn.com/026/3687b7ddfa714fcd3d7e1a4af95ead4e_96.mp4",
-      title: "Chaleya (From \"Jawan\")",
-      subtitle: "Chaleya (From \"Jawan\")",
-      image:
-          "https://c.saavncdn.com/111/4-G-Ka-Jamana-Single-Hindi-2019-20190617084107-500x500.jpg",
-    ),
-  ];
-
 
   @override
   void initState() {
     super.initState();
-    readLocal();
-    _tabController = TabController(
-        length: 2,
-        vsync: this); // Adjust the length based on the number of tabs you want
   }
-  Future<void> readLocal() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+// musi
+
+  void _onItemTapped(int index) {
     setState(() {
-      id = prefs.getString(FirestoreConstants.id) ?? "";
-      nickname = prefs.getString(FirestoreConstants.nickname) ?? "";
-      photoUrl = prefs.getString(FirestoreConstants.photoUrl) ?? "";
-      userEmail = prefs.getString(FirestoreConstants.userEmail) ?? "";
+      _selectedIndex = index;
+      _pageController.animateToPage(
+        index,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.ease,
+      );
     });
-
-
   }
-
 
   @override
   Widget build(BuildContext context) {
-    final colorTheme = Theme.of(context).colorScheme;
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
+    return Scaffold(
+      // backgroundColor: const Color(0xFF222B40),
+      backgroundColor: Colors.black,
 
-      // Existing MaterialApp code...
-      home: DefaultTabController(
-        length: 2, // Number of tabs
-        child: Scaffold(
-          // backgroundColor: const Color(0xFF222B40),
-          backgroundColor:  colorTheme.onBackground,
-
-          // Existing Scaffold code...
-          body: CustomScrollView(
-            slivers: [
-              // SliverAppBar(
-              //   pinned: true,
-              //   stretch: true,
-              //   expandedHeight: 40,
-              //   // backgroundColor: const Color(0xFF222B40),
-              //   backgroundColor:  Colors.black,
-              //   onStretchTrigger: () async {
-              //     // await Server.requestNewData();
-              //   },
-              //   flexibleSpace: FlexibleSpaceBar(
-              //     title: Padding(
-              //       padding:
-              //           const EdgeInsets.only(top: 45.0, left: 10, right: 15),
-              //       child: Container(
-              //         child: Row(
-              //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //           children: [
-              //
-              //         RichText(
-              //         text: TextSpan(
-              //         text: 'Hi  ',
-              //           style: TextStyle(color: Colors.blue,fontSize: 20),
-              //           children: <TextSpan>[
-              //             TextSpan(
-              //               text: 'Ravikant saini',
-              //               style: TextStyle(color: Colors.orange),
-              //             ),
-              //           ],
-              //         ),
-              //       ),
-              //
-              //             // Padding(
-              //             //   padding: const EdgeInsets.only(left: 0.0),
-              //             //   child: SizedBox(
-              //             //     width: 50,
-              //             //     child: GestureDetector(
-              //             //       onTap: () {
-              //             //
-              //             //       },
-              //             //       child: Container(
-              //             //         child: ClipRRect(
-              //             //           borderRadius: BorderRadius.circular(30),
-              //             //           child: Image.network(
-              //             //             photoUrl,
-              //             //             fit: BoxFit.cover,
-              //             //             width: 50,
-              //             //             height: 50,
-              //             //             errorBuilder: (context, object, stackTrace) {
-              //             //               return Icon(
-              //             //                 Icons.account_circle,
-              //             //                 size: 50,
-              //             //                 color: ColorConstants.greyColor,
-              //             //               );
-              //             //             },
-              //             //           )
-              //             //         )
-              //             //       ),
-              //             //     ),
-              //             //   ),
-              //             // ),
-              //             // SizedBox(
-              //             //   width: 250,
-              //             //   child: Container(
-              //             //     height: 40,
-              //             //     decoration: BoxDecoration(
-              //             //       //This is for background color
-              //             //       color: Colors.white.withOpacity(0.0),
-              //             //       //This is for bottom border that is needed
-              //             //     ),
-              //             //     child: Padding(
-              //             //       padding: const EdgeInsets.symmetric(
-              //             //           horizontal: 2, vertical: 2),
-              //             //       child: TabBar(
-              //             //         dividerColor: Colors.transparent,
-              //             //         onTap: (index) {
-              //             //           setState(() {
-              //             //             selectIndex = index;
-              //             //           });
-              //             //         },
-              //             //         labelPadding:
-              //             //             const EdgeInsets.symmetric(horizontal: 0),
-              //             //         indicator: BoxDecoration(),
-              //             //         controller: _tabController,
-              //             //         tabs: [
-              //             //           selectIndex != 0
-              //             //               ? const Text(
-              //             //                   '$upComing ',
-              //             //                   style: TextStyle(
-              //             //                       color: gWhite, fontSize: 18),
-              //             //                 )
-              //             //               : Container(
-              //             //                   width: 130,
-              //             //                   decoration: BoxDecoration(
-              //             //                     borderRadius:
-              //             //                         BorderRadius.circular(5),
-              //             //                     // color: const Color(0xffe9e9e9)),
-              //             //                     color: Colors.orange,
-              //             //                   ),
-              //             //                   child: const Center(
-              //             //                     child: Text(
-              //             //                       '$upComing',
-              //             //                       style: TextStyle(
-              //             //                           color: gBlack,
-              //             //                           fontSize: 18),
-              //             //                     ),
-              //             //                   ),
-              //             //                 ),
-              //             //           selectIndex != 1
-              //             //               ? const Text(
-              //             //                   '$inProgress',
-              //             //                   style: TextStyle(
-              //             //                       color: gWhite, fontSize: 18),
-              //             //                 )
-              //             //               : Container(
-              //             //                   width: 130,
-              //             //                   decoration: BoxDecoration(
-              //             //                     borderRadius:
-              //             //                         BorderRadius.circular(5),
-              //             //                     // color: const Color(0xffe9e9e9)),
-              //             //                     color: Colors.orange,
-              //             //                   ),
-              //             //                   child: const Center(
-              //             //                     child: Text(
-              //             //                       '$inProgress',
-              //             //                       style: TextStyle(
-              //             //                           color: gBlack,
-              //             //                           fontSize: 18),
-              //             //                     ),
-              //             //                   ),
-              //             //                 ),
-              //             //
-              //             //         ],
-              //             //       ),
-              //             //     ),
-              //             //   ),
-              //             // ),
-              //             // SizedBox(
-              //             //   width: 35,
-              //             //   child: Container(
-              //             //     constraints: BoxConstraints.expand(height: 90),
-              //             //     // Height of the tab bar
-              //             //   ),
-              //             // ),
-              //             // SizedBox(
-              //             //   width: 50,
-              //             //   child: Container(
-              //             //     constraints: BoxConstraints.expand(height: 90),
-              //             //     // Height of the tab bar
-              //             //     child: IconButton(
-              //             //       icon: Icon(
-              //             //         Icons.settings,
-              //             //         color: Colors.white,
-              //             //       ),
-              //             //       onPressed: () {
-              //             //         Navigator.push(
-              //             //           context,
-              //             //           MaterialPageRoute(
-              //             //             builder: (context) {
-              //             //               return SettingScreen();
-              //             //             },
-              //             //           ),
-              //             //         );
-              //             //       },
-              //             //     ),
-              //             //   ),
-              //             // ),
-              //           ],
-              //         ),
-              //       ),
-              //     ),
-              //     titlePadding: EdgeInsets.only(top: 1),
-              //     centerTitle: true,
-              //     stretchModes: const <StretchMode>[
-              //       StretchMode.zoomBackground,
-              //       StretchMode.fadeTitle,
-              //       StretchMode.blurBackground,
-              //     ],
-              //   ),
-              // ),
-              SliverFillRemaining(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // Contents of Tab 1
-                    SingleChildScrollView(
-                      child: Column(
-                        children: [
-
-                          Padding(
-                            padding: const EdgeInsets.only(top: 48.0),
-                            child: SizedBox(
-                              height: 50,
-                              child: Column(children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 0.0),
-                                  child: SizedBox(
-                                    height: 50,
-                                    child: ListView.builder(
-                                        itemCount: 1,
-                                        scrollDirection: Axis.horizontal,
-                                        itemBuilder: (context, index) {
-                                          return Row(
-                                              mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                Padding(
-                                                  padding: const EdgeInsets.only(
-                                                      left: 10.0),
-                                                  child: RichText(
-                                                    text: TextSpan(
-                                                      text: 'Hi  ',
-                                                      style: TextStyle(color: Colors.blue,fontSize: 20),
-                                                      children: <TextSpan>[
-                                                        TextSpan(
-                                                          text: nickname,
-                                                          style: TextStyle(color: Colors.orange),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ]);
-                                        }),
-                                  ),
-                                ),
-                              ]),
-                            ),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        automaticallyImplyLeading: false,
+        title: Padding(
+          padding: EdgeInsets.all(0.0),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    _onItemTapped(0);
+                  },
+                  child: Card(
+                    color: _selectedIndex == 0
+                        ? Colors.orangeAccent
+                        : Colors.white,
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Center(
+                        child: Text(
+                          'Music',
+                          style: GoogleFonts.poppins(
+                            textStyle: TextStyle(
+                                color: _selectedIndex == 0
+                                    ? Colors.white
+                                    : Colors.orangeAccent,
+                                fontSize: TextSizes.textlarge,
+                                fontWeight: FontWeight.normal,
+                                overflow: TextOverflow.ellipsis),
                           ),
-
-
-                          //  recently view all
-                          SizedBox(
-                            height: 50,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 0.0),
-                                child: SizedBox(
-                                  height: 50,
-                                  child: ListView.builder(
-                                      itemCount: 1,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        return Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10.0),
-                                                child: Text(
-                                                  'Recently Songs',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 190.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) {
-                                                          return RecentlySongsClass();
-                                                        },
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Text(
-                                                    'View All',
-                                                    style: GoogleFonts.poppins(
-                                                      textStyle:
-                                                          const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ]);
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-                          // recntly list
-                          SizedBox(
-                            height: 230,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: SizedBox(
-                                  height: 210,
-                                  child: ListView.builder(
-                                    itemCount: 5,
-                                    scrollDirection: Axis.horizontal,
-                                    itemBuilder: (context, index) =>
-                                        GestureDetector(
-                                            onTap: () async {
-                                              // _playSong(recently[index].toString());
-
-                                              // _playSong(recently[index] as int);
-                                              // musicService.songPlay(recently);
-
-                                              musicService.playCurrentSong();
-
-                                              // musicService.playSong(
-                                              //     recently[index].url,
-                                              //     recently[index].image,
-                                              //     recently[index].title,
-                                              //     recently[index].subtitle);
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Column(
-                                                    children: [
-                                                      SizedBox(
-                                                        height: 150,
-                                                        width: 150,
-                                                        child: Card(
-                                                          color: Colors.white,
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        1.0),
-                                                          ),
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        1.0),
-                                                            // Adjust the radius as needed
-                                                            // child: Image.network(
-                                                            //   songs[index].metas.image!.path,
-                                                            //   fit: BoxFit.fill,
-                                                            // ),
-
-                                                            child:
-                                                                Image.network(
-                                                              recently[index]
-                                                                  .image,
-                                                              fit: BoxFit.fill,
-                                                            ),
-                                                          ),
-
-                                                          // child: Column(
-                                                          //   children: [
-                                                          //
-                                                          //     Text('title'),
-                                                          //     Text('subtitle')
-                                                          //
-                                                          //   ],
-                                                          // ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width: 100,
-                                                  child: Text(
-                                                    recently[index].title,
-                                                    style: GoogleFonts.poppins(
-                                                      textStyle: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 17,
-                                                          fontWeight:
-                                                              FontWeight.normal,
-                                                          overflow: TextOverflow
-                                                              .ellipsis),
-                                                    ),
-                                                  ),
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    SizedBox(
-                                                      width: 100,
-                                                      child: Text(
-                                                          recently[index]
-                                                              .subtitle,
-                                                          style: TextStyle(
-                                                              color:
-                                                                  Colors.grey,
-                                                              fontSize: 13),
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            )),
-                                  ),
-                                ),
-                              ),
-                            ]),
-                          ),
-
-
-                          // trending view all
-                          SizedBox(
-                            height: 50,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 0.0),
-                                child: SizedBox(
-                                  height: 50,
-                                  child: ListView.builder(
-                                      itemCount: 1,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        return Row(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10.0),
-                                                child: Text(
-                                                  'Trending Now',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                        FontWeight.bold),
-                                                  ),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 195.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) {
-                                                          return TrendingNowViewAll();
-                                                        },
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Text(
-                                                    'View All',
-                                                    style: GoogleFonts.poppins(
-                                                      textStyle:
-                                                      const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                        FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ]);
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-                          // trending list
-                          SizedBox(
-                            height: 230,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: SizedBox(
-                                  height: 210,
-                                  child: ListView.builder(
-                                      itemCount: 5,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        final cartItem = trendingSongs[index];
-
-                                        return GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) {
-                                                    return SongsDeatilsList(
-                                                      url: cartItem.url,
-                                                      image: cartItem.image,
-                                                      title: cartItem.title,
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                  const EdgeInsets.all(8.0),
-                                                  child: Column(
-                                                    children: [
-                                                      SizedBox(
-                                                        height: 150,
-                                                        width: 150,
-                                                        child: Card(
-                                                          color: Colors.white,
-                                                          shape:
-                                                          RoundedRectangleBorder(
-                                                            borderRadius:
-                                                            BorderRadius
-                                                                .circular(
-                                                                1.0),
-                                                          ),
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                            BorderRadius
-                                                                .circular(
-                                                                1.0),
-                                                            // Adjust the radius as needed
-                                                            child:
-                                                            Image.network(
-                                                              trendingSongs[
-                                                              index]
-                                                                  .image,
-                                                              fit: BoxFit.fill,
-                                                            ),
-                                                          ),
-
-                                                          // child: Column(
-                                                          //   children: [
-                                                          //
-                                                          //     Text('title'),
-                                                          //     Text('subtitle')
-                                                          //
-                                                          //   ],
-                                                          // ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Text(
-                                                  cartItem.title,
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                        FontWeight.normal),
-                                                  ),
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      'Sachet Tandon',
-                                                      style:
-                                                      GoogleFonts.poppins(
-                                                        textStyle:
-                                                        const TextStyle(
-                                                            color:
-                                                            Colors.grey,
-                                                            fontSize: 11,
-                                                            fontWeight:
-                                                            FontWeight
-                                                                .normal),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ));
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-
-                          //  bollywood view all
-                          SizedBox(
-                            height: 50,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 0.0),
-                                child: SizedBox(
-                                  height: 50,
-                                  child: ListView.builder(
-                                      itemCount: 1,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        return Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10.0),
-                                                child: Text(
-                                                  'BollyWood Masala',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 185.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) {
-                                                          return BollywoodMasala();
-                                                        },
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Text(
-                                                    'View All',
-                                                    style: GoogleFonts.poppins(
-                                                      textStyle:
-                                                          const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ]);
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-                          // bollywood list
-                          SizedBox(
-                            height: 230,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: SizedBox(
-                                  height: 210,
-                                  child: ListView.builder(
-                                      itemCount: 5,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        final cartItem = lastSongs[index];
-
-                                        return GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) {
-                                                    return SongsDeatilsList(
-                                                      url: cartItem.url,
-                                                      image: cartItem.image,
-                                                      title: cartItem.title,
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                              // Navigator.push(
-                                              //   context,
-                                              //   MaterialPageRoute(
-                                              //     builder: (context) {
-                                              //       return SongsDeatilsList();
-                                              //     },
-                                              //   ),
-                                              // );
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Column(
-                                                    children: [
-                                                      SizedBox(
-                                                        height: 150,
-                                                        width: 150,
-                                                        child: Card(
-                                                          color: Colors.white,
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        1.0),
-                                                          ),
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        1.0),
-                                                            // Adjust the radius as needed
-                                                            child:
-                                                                Image.network(
-                                                              lastSongs[index]
-                                                                  .image,
-                                                              fit: BoxFit.fill,
-                                                            ),
-                                                          ),
-
-                                                          // child: Column(
-                                                          //   children: [
-                                                          //
-                                                          //     Text('title'),
-                                                          //     Text('subtitle')
-                                                          //
-                                                          //   ],
-                                                          // ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Mei Ho Ja',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.normal),
-                                                  ),
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      'Sachet Tandon',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                        textStyle:
-                                                            const TextStyle(
-                                                                color:
-                                                                    Colors.grey,
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .normal),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ));
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-
-                          // Artist Stations list
-                          SizedBox(
-                            height: 290,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 10.0,
-                                  top: 20,
-                                ),
-                                child: Column(children: [
-                                  Row(children: [
-                                    Text(
-                                      'Recommennded Artist Stations',
-                                      style: GoogleFonts.poppins(
-                                        textStyle: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  ]),
-                                ]),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: SizedBox(
-                                  height: 220,
-                                  child: ListView.builder(
-                                      itemCount: artistSongs.length,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        final cartItem = artistSongs[index];
-
-                                        return GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) {
-                                                    return SongsDeatilsList(
-                                                      url: cartItem.url,
-                                                      image: cartItem.image,
-                                                      title: cartItem.title,
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Stack(
-                                                  children: [
-                                                    Card(
-                                                        color: Colors.grey,
-                                                        elevation: 4.0,
-                                                        shape:
-                                                            RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                  100.0), // Adjust the value as needed
-                                                        ),
-                                                        margin: const EdgeInsets
-                                                            .all(10),
-                                                        child: const SizedBox(
-                                                          height: 160,
-                                                          width: 160,
-                                                          child: Column(
-                                                            // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                            children: [
-                                                              Padding(
-                                                                padding:
-                                                                    EdgeInsets
-                                                                        .only(
-                                                                  left: 5.0,
-                                                                  top: 10,
-                                                                ),
-                                                              )
-                                                            ],
-                                                          ),
-                                                        )),
-                                                    Center(
-                                                      child: Card(
-                                                          elevation: 4.0,
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        100.0), // Adjust the value as needed
-                                                          ),
-                                                          margin:
-                                                              const EdgeInsets
-                                                                  .all(20),
-                                                          child: SizedBox(
-                                                            height: 140,
-                                                            width: 140,
-                                                            child: Column(
-                                                              // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                              children: [
-                                                                Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .only(
-                                                                    left: 0.0,
-                                                                    top: 0,
-                                                                  ),
-                                                                  child:
-                                                                      Padding(
-                                                                    padding: const EdgeInsets
-                                                                        .only(
-                                                                        top:
-                                                                            0.0),
-
-                                                                    child:
-                                                                        ClipOval(
-                                                                      child:
-                                                                          Container(
-                                                                        width:
-                                                                            140.0,
-                                                                        // Adjust the width and height as needed
-                                                                        height:
-                                                                            140.0,
-                                                                        color: Colors
-                                                                            .blue,
-                                                                        // Background color of the circular container
-                                                                        child: Image.network(
-                                                                            artistSongs[index].image),
-                                                                      ),
-                                                                    ),
-                                                                    // child: SizedBox(
-                                                                    //   height: 130,
-                                                                    //   width: 130,
-                                                                    //   child: Image.asset("assets/Kumar_sanu.jpg"),
-                                                                    //
-                                                                    //   // child: Image.network(
-                                                                    //   //   mapResponse1['base_url'] +
-                                                                    //   //       listResponse1[index]['photo'],
-                                                                    //   //
-                                                                    //   // )
-                                                                    // ),
-                                                                  ),
-                                                                )
-                                                              ],
-                                                            ),
-                                                          )),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Text(
-                                                  cartItem.title,
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.normal),
-                                                  ),
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      'Artist Radio',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                        textStyle:
-                                                            const TextStyle(
-                                                                color:
-                                                                    Colors.grey,
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .normal),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ));
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-
-
-
-                          // top charts view all
-                          SizedBox(
-                            height: 50,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 0.0),
-                                child: SizedBox(
-                                  height: 50,
-                                  child: ListView.builder(
-                                      itemCount: 1,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        return Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10.0),
-                                                child: Text(
-                                                  'Top Charts',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 225.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) {
-                                                          return TopChartViewAll();
-                                                        },
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Text(
-                                                    'View All',
-                                                    style: GoogleFonts.poppins(
-                                                      textStyle:
-                                                          const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ]);
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-                          // top charts list
-                          SizedBox(
-                            height: 230,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: SizedBox(
-                                  height: 210,
-                                  child: ListView.builder(
-                                      itemCount: topchartSongs.length,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        final cartItem = topchartSongs[index];
-
-                                        return GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) {
-                                                    return SongsDeatilsList(
-                                                      url: cartItem.url,
-                                                      image: cartItem.image,
-                                                      title: cartItem.title,
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Column(
-                                                    children: [
-                                                      SizedBox(
-                                                        height: 150,
-                                                        width: 150,
-                                                        child: Card(
-                                                          color: Colors.white,
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        1.0),
-                                                          ),
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        1.0),
-                                                            // Adjust the radius as needed
-                                                            child:
-                                                                Image.network(
-                                                              topchartSongs[
-                                                                      index]
-                                                                  .image,
-                                                              fit: BoxFit.fill,
-                                                            ),
-                                                          ),
-
-                                                          // child: Column(
-                                                          //   children: [
-                                                          //
-                                                          //     Text('title'),
-                                                          //     Text('subtitle')
-                                                          //
-                                                          //   ],
-                                                          // ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Text(
-                                                  cartItem.title,
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.normal),
-                                                  ),
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      'Sachet Tandon',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                        textStyle:
-                                                            const TextStyle(
-                                                                color:
-                                                                    Colors.grey,
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .normal),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ));
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-
-                          // new releasse view all
-                          SizedBox(
-                            height: 50,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 0.0),
-                                child: SizedBox(
-                                  height: 50,
-                                  child: ListView.builder(
-                                      itemCount: 1,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        return Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10.0),
-                                                child: Text(
-                                                  'New Releasse',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 195.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) {
-                                                          return NewReleasseViewAll();
-                                                        },
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Text(
-                                                    'View All',
-                                                    style: GoogleFonts.poppins(
-                                                      textStyle:
-                                                          const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ]);
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-                          // new releasse list
-                          SizedBox(
-                            height: 230,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: SizedBox(
-                                  height: 210,
-                                  child: ListView.builder(
-                                      itemCount: 5,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        final cartItem =
-                                            newReleasseSongs[index];
-
-                                        return GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) {
-                                                    return SongsDeatilsList(
-                                                      url: cartItem.url,
-                                                      image: cartItem.image,
-                                                      title: cartItem.title,
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Column(
-                                                    children: [
-                                                      SizedBox(
-                                                        height: 150,
-                                                        width: 150,
-                                                        child: Card(
-                                                          color: Colors.white,
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        1.0),
-                                                          ),
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        1.0),
-                                                            // Adjust the radius as needed
-                                                            child:
-                                                                Image.network(
-                                                              newReleasseSongs[
-                                                                      index]
-                                                                  .image,
-                                                              fit: BoxFit.fill,
-                                                            ),
-                                                          ),
-
-                                                          // child: Column(
-                                                          //   children: [
-                                                          //
-                                                          //     Text('title'),
-                                                          //     Text('subtitle')
-                                                          //
-                                                          //   ],
-                                                          // ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Text(
-                                                  cartItem.title,
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.normal),
-                                                  ),
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      'Sachet Tandon',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                        textStyle:
-                                                            const TextStyle(
-                                                                color:
-                                                                    Colors.grey,
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .normal),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ));
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-
-                    // Contents of Tab 2
-                    SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          //  recently view all
-                          SizedBox(
-                            height: 50,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 0.0),
-                                child: SizedBox(
-                                  height: 50,
-                                  child: ListView.builder(
-                                      itemCount: 1,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        return Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10.0),
-                                                child: Text(
-                                                  'Punjabi Songs',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 190.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) {
-                                                          return PunjabiViewAll();
-                                                        },
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Text(
-                                                    'View All',
-                                                    style: GoogleFonts.poppins(
-                                                      textStyle:
-                                                          const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ]);
-                                      }),
-                                ),
-                              ),
-                            ]),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    _onItemTapped(1);
+                  },
+                  child: Card(
+                    color: _selectedIndex == 1
+                        ? Colors.orangeAccent
+                        : Colors.white,
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Center(
+                        child: Text(
+                          'Podcasts',
+                          style: GoogleFonts.poppins(
+                            textStyle: TextStyle(
+                                color: _selectedIndex == 1
+                                    ? Colors.white
+                                    : Colors.orangeAccent,
+                                fontSize: TextSizes.textlarge,
+                                fontWeight: FontWeight.normal,
+                                overflow: TextOverflow.ellipsis),
                           ),
-                          // recntly list
-                          SizedBox(
-                            height: 230,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: SizedBox(
-                                  height: 210,
-                                  child: ListView.builder(
-                                    itemCount: 5,
-                                    scrollDirection: Axis.horizontal,
-                                    itemBuilder: (context, index) =>
-                                        GestureDetector(
-                                            onTap: () async {
-                                              // _playSong(recently[index].toString());
-
-                                              // _playSong(recently[index] as int);
-                                              // musicService.songPlay(recently);
-
-                                              musicService.playSong(
-                                                  recently[index].url,
-                                                  recently[index].image,
-                                                  recently[index].title,
-                                                  recently[index].subtitle);
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Column(
-                                                    children: [
-                                                      SizedBox(
-                                                        height: 150,
-                                                        width: 150,
-                                                        child: Card(
-                                                          color: Colors.white,
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        15.0),
-                                                          ),
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10.0),
-                                                            // Adjust the radius as needed
-                                                            // child: Image.network(
-                                                            //   songs[index].metas.image!.path,
-                                                            //   fit: BoxFit.fill,
-                                                            // ),
-
-                                                            child:
-                                                                Image.network(
-                                                              punjabiSongs[
-                                                                      index]
-                                                                  .image,
-                                                              fit: BoxFit.fill,
-                                                            ),
-                                                          ),
-
-                                                          // child: Column(
-                                                          //   children: [
-                                                          //
-                                                          //     Text('title'),
-                                                          //     Text('subtitle')
-                                                          //
-                                                          //   ],
-                                                          // ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width: 100,
-                                                  child: Text(
-                                                    punjabiSongs[index].title,
-                                                    style: GoogleFonts.poppins(
-                                                      textStyle: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 17,
-                                                          fontWeight:
-                                                              FontWeight.normal,
-                                                          overflow: TextOverflow
-                                                              .ellipsis),
-                                                    ),
-                                                  ),
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    SizedBox(
-                                                      width: 100,
-                                                      child: Text(
-                                                          punjabiSongs[index]
-                                                              .title,
-                                                          style: TextStyle(
-                                                              color:
-                                                                  Colors.grey,
-                                                              fontSize: 13),
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            )),
-                                  ),
-                                ),
-                              ),
-                            ]),
-                          ),
-
-                          //  bollywood view all
-                          SizedBox(
-                            height: 50,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 0.0),
-                                child: SizedBox(
-                                  height: 50,
-                                  child: ListView.builder(
-                                      itemCount: 1,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        return Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10.0),
-                                                child: Text(
-                                                  'BollyWood Songs',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 185.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) {
-                                                          return BollywoodSongsViewAll();
-                                                        },
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Text(
-                                                    'View All',
-                                                    style: GoogleFonts.poppins(
-                                                      textStyle:
-                                                          const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ]);
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-                          // bollywood list
-                          SizedBox(
-                            height: 230,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: SizedBox(
-                                  height: 210,
-                                  child: ListView.builder(
-                                      itemCount: 5,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        final cartItem = lastSongs[index];
-
-                                        return GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) {
-                                                    return SongsDeatilsList(
-                                                      url: cartItem.url,
-                                                      image: cartItem.image,
-                                                      title: cartItem.title,
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                              // Navigator.push(
-                                              //   context,
-                                              //   MaterialPageRoute(
-                                              //     builder: (context) {
-                                              //       return SongsDeatilsList();
-                                              //     },
-                                              //   ),
-                                              // );
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Column(
-                                                    children: [
-                                                      SizedBox(
-                                                        height: 150,
-                                                        width: 150,
-                                                        child: Card(
-                                                          color: Colors.white,
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        15.0),
-                                                          ),
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10.0),
-                                                            // Adjust the radius as needed
-                                                            child:
-                                                                Image.network(
-                                                              bollywoodSongs[
-                                                                      index]
-                                                                  .image,
-                                                              fit: BoxFit.fill,
-                                                            ),
-                                                          ),
-
-                                                          // child: Column(
-                                                          //   children: [
-                                                          //
-                                                          //     Text('title'),
-                                                          //     Text('subtitle')
-                                                          //
-                                                          //   ],
-                                                          // ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Mei Ho Ja',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.normal),
-                                                  ),
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      'Sachet Tandon',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                        textStyle:
-                                                            const TextStyle(
-                                                                color:
-                                                                    Colors.grey,
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .normal),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ));
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-
-                          SizedBox(
-                            height: 50,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 0.0),
-                                child: SizedBox(
-                                  height: 50,
-                                  child: ListView.builder(
-                                      itemCount: 1,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        return Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10.0),
-                                                child: Text(
-                                                  'Trending Songs',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 195.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) {
-                                                          return TrendingSongsViewAll();
-                                                        },
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Text(
-                                                    'View All',
-                                                    style: GoogleFonts.poppins(
-                                                      textStyle:
-                                                          const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ]);
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-                          // trending list
-                          SizedBox(
-                            height: 230,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: SizedBox(
-                                  height: 210,
-                                  child: ListView.builder(
-                                      itemCount: 5,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        final cartItem = trendingsSongs[index];
-
-                                        return GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) {
-                                                    return SongsDeatilsList(
-                                                      url: cartItem.url,
-                                                      image: cartItem.image,
-                                                      title: cartItem.title,
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Column(
-                                                    children: [
-                                                      SizedBox(
-                                                        height: 150,
-                                                        width: 150,
-                                                        child: Card(
-                                                          color: Colors.white,
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        15.0),
-                                                          ),
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10.0),
-                                                            // Adjust the radius as needed
-                                                            child:
-                                                                Image.network(
-                                                              trendingsSongs[
-                                                                      index]
-                                                                  .image,
-                                                              fit: BoxFit.fill,
-                                                            ),
-                                                          ),
-
-                                                          // child: Column(
-                                                          //   children: [
-                                                          //
-                                                          //     Text('title'),
-                                                          //     Text('subtitle')
-                                                          //
-                                                          //   ],
-                                                          // ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Mei Ho Ja',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.normal),
-                                                  ),
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      'Sachet Tandon',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                        textStyle:
-                                                            const TextStyle(
-                                                                color:
-                                                                    Colors.grey,
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .normal),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ));
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-
-                          // top charts view all
-                          SizedBox(
-                            height: 50,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 0.0),
-                                child: SizedBox(
-                                  height: 50,
-                                  child: ListView.builder(
-                                      itemCount: 1,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        return Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10.0),
-                                                child: Text(
-                                                  'Haryanvi Songs',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 195.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) {
-                                                          return HaryanviSongsViewAll();
-                                                        },
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Text(
-                                                    'View All',
-                                                    style: GoogleFonts.poppins(
-                                                      textStyle:
-                                                          const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ]);
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-                          // top charts list
-                          SizedBox(
-                            height: 230,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: SizedBox(
-                                  height: 210,
-                                  child: ListView.builder(
-                                      itemCount: haryanviSongs.length,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        final cartItem = haryanviSongs[index];
-
-                                        return GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) {
-                                                    return SongsDeatilsList(
-                                                      url: cartItem.url,
-                                                      image: cartItem.image,
-                                                      title: cartItem.title,
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Column(
-                                                    children: [
-                                                      SizedBox(
-                                                        height: 150,
-                                                        width: 150,
-                                                        child: Card(
-                                                          color: Colors.white,
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        15.0),
-                                                          ),
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10.0),
-                                                            // Adjust the radius as needed
-                                                            child:
-                                                                Image.network(
-                                                              haryanviSongs[
-                                                                      index]
-                                                                  .image,
-                                                              fit: BoxFit.fill,
-                                                            ),
-                                                          ),
-
-                                                          // child: Column(
-                                                          //   children: [
-                                                          //
-                                                          //     Text('title'),
-                                                          //     Text('subtitle')
-                                                          //
-                                                          //   ],
-                                                          // ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Mei Ho Ja',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.normal),
-                                                  ),
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      'Sachet Tandon',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                        textStyle:
-                                                            const TextStyle(
-                                                                color:
-                                                                    Colors.grey,
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .normal),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ));
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-
-                          // new releasse view all
-                          SizedBox(
-                            height: 50,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 0.0),
-                                child: SizedBox(
-                                  height: 50,
-                                  child: ListView.builder(
-                                      itemCount: 1,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        return Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10.0),
-                                                child: Text(
-                                                  'Top Songs - Hindi',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 185.0),
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) {
-                                                          return TopSongsViewAll();
-                                                        },
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Text(
-                                                    'View All',
-                                                    style: GoogleFonts.poppins(
-                                                      textStyle:
-                                                          const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ]);
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-                          SizedBox(
-                            height: 230,
-                            child: Column(children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: SizedBox(
-                                  height: 210,
-                                  child: ListView.builder(
-                                      itemCount: 5,
-                                      scrollDirection: Axis.horizontal,
-                                      itemBuilder: (context, index) {
-                                        final cartItem = tophindiSongs[index];
-
-                                        return GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) {
-                                                    return SongsDeatilsList(
-                                                      url: cartItem.url,
-                                                      image: cartItem.image,
-                                                      title: cartItem.title,
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Column(
-                                                    children: [
-                                                      SizedBox(
-                                                        height: 150,
-                                                        width: 150,
-                                                        child: Card(
-                                                          color: Colors.white,
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        15.0),
-                                                          ),
-                                                          child: ClipRRect(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10.0),
-                                                            // Adjust the radius as needed
-                                                            child:
-                                                                Image.network(
-                                                              tophindiSongs[
-                                                                      index]
-                                                                  .image,
-                                                              fit: BoxFit.fill,
-                                                            ),
-                                                          ),
-
-                                                          // child: Column(
-                                                          //   children: [
-                                                          //
-                                                          //     Text('title'),
-                                                          //     Text('subtitle')
-                                                          //
-                                                          //   ],
-                                                          // ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Mei Ho Ja',
-                                                  style: GoogleFonts.poppins(
-                                                    textStyle: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 17,
-                                                        fontWeight:
-                                                            FontWeight.normal),
-                                                  ),
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      'Sachet Tandon',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                        textStyle:
-                                                            const TextStyle(
-                                                                color:
-                                                                    Colors.grey,
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .normal),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ));
-                                      }),
-                                ),
-                              ),
-                            ]),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-
-                  ],
+                  ),
                 ),
               ),
             ],
           ),
         ),
+        // Add this line to remove the back button
+      ),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        children: [
+          AllMusicScreen(),
+          OnlyMusicScreen(),
+        ],
       ),
     );
   }
 }
+class AllMusicScreen extends StatefulWidget {
+  AllMusicScreen({
+    super.key,
 
-class ConstantScrollBehavior extends ScrollBehavior {
-  const ConstantScrollBehavior();
-
-  @override
-  Widget buildScrollbar(
-          BuildContext context, Widget child, ScrollableDetails details) =>
-      child;
+  });
 
   @override
-  Widget buildOverscrollIndicator(
-          BuildContext context, Widget child, ScrollableDetails details) =>
-      child;
+  _AllMusicScreenState createState() => _AllMusicScreenState();
+}
+
+class _AllMusicScreenState extends State<AllMusicScreen> {
+  final List<Map<String, dynamic>> categories = [
+    {
+      'name': 'Category 1',
+      'items': ['Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5']
+    },
+    {
+      'name': 'Category 2',
+      'items': [
+        'Item 6',
+        'Item 7',
+        'Item 8',
+        'Item 9',
+        'Item 10',
+        'trt',
+        't',
+      ]
+    },
+  ];
+
+  MusicService musicService = MusicService();
+  Timer? timer;
+
+  PageController _pageController = PageController(initialPage: 0);
+
+  bool isDrawerOpen = false;
+
+  List<bool> _selections = [true, false];
+
+  int _selectedIndex = 0;
+
+  bool isLiked = false;
+
+  bool download = false;
+
+  int selectIndex = 0;
+
+  String searchQuery = '';
+
+  String photoUrl = '';
+
+  String albumType = 'album_id';
+  String playlistType = 'playlist_id';
+  String artistType = 'artist_id';
+
+  List<Music> recentlySong = [];
+  List<dynamic> artists = [];
+  List<dynamic> topCharts = [];
+  List<dynamic> albums = [];
+  List<dynamic> newReleas = [];
+
+  List<dynamic> trendingAlbum = [];
+  List<dynamic> bollywoodAlbum = [];
+  List<dynamic> playlists = [];
+  List<dynamic> director = [];
+  List<dynamic> banner = [];
+  List<dynamic> category = [];
+
+  bool _isLoading = false;
+
+  void _startLoading() {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Simulate a 5-second delay
+    Future.delayed(Duration(seconds: 2), () {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
+
+
+  Future<void> _handleRefresh() async {
+    try {
+      // Fetch new data and update the state
+      await hitAllcategory();
+      await hitRecently();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Page Refreshed!')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to refresh')),
+      );
+    }
+  }
 
   @override
-  TargetPlatform getPlatform(BuildContext context) => TargetPlatform.android;
+  void initState() {
+    super.initState();
+    hitAllcategory();
+    hitPlaylists();
+    hitArtists();
+    hitAlbums();
+    hitBollywoodalbum();
+    hitDirectors();
+    hitRecently();
+    hitNewRelease();
+    hitTrending();
+    hitTopCharts();
+    _startLoading();
+    hitBanner();
+    musicService.hitRecently();
+
+    // timer = Timer.periodic(Duration(seconds: 1), (Timer t) =>    hitRecently());
+  }
+  Future<void> hitBanner() async {
+    final response = await http.get(Uri.parse(albumbanner));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('banner')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          banner = responseData['banner'];
+          // restBanner=responseData['data']['banner_img'];
+          print(banner);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitUserSongs(String id) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+
+    final response = await http.post(
+      Uri.parse(userSongs),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'song_id': id,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load recently songs');
+    }
+  }
+
+  Future<void> hitPlaylists() async {
+    final response = await http.get(Uri.parse(playlist));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('playlist')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          playlists = responseData['playlist'];
+          // restBanner=responseData['data']['banner_img'];
+          print(playlists);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitArtists() async {
+    final response = await http.get(Uri.parse(artist));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('data')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          artists = responseData['data'];
+          // restBanner=responseData['data']['banner_img'];
+          print(artists);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitAlbums() async {
+    final response = await http.get(Uri.parse(album));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('data')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          albums = responseData['data'];
+          // restBanner=responseData['data']['banner_img'];
+          print(artists);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitTrending() async {
+    final response = await http.get(Uri.parse(trendingAlbums));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('trendingAlbums')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          trendingAlbum = responseData['trendingAlbums'];
+          // restBanner=responseData['data']['banner_img'];
+          print(trendingAlbum);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitBollywoodalbum() async {
+    final response = await http.get(Uri.parse(bollywoodalbum));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('bollywoodAlbums')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          bollywoodAlbum = responseData['bollywoodAlbums'];
+          // restBanner=responseData['data']['banner_img'];
+          print(bollywoodAlbum);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitNewRelease() async {
+    final response = await http.get(Uri.parse(newReleaseAlbum));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('newRelease')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          newReleas = responseData['newRelease'];
+          // restBanner=responseData['data']['banner_img'];
+          print(newReleas);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitAllcategory() async {
+    final response = await http.get(Uri.parse(playlistcategory));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('category')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          category = responseData['category'];
+          // restBanner=responseData['data']['banner_img'];
+          print(category);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitTopCharts() async {
+    final response = await http.get(Uri.parse(topChart));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('playlist')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          topCharts = responseData['playlist'];
+          // restBanner=responseData['data']['banner_img'];
+          print(topCharts);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitDirectors() async {
+    final response = await http.get(Uri.parse(directors));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('directors')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          director = responseData['directors'];
+          // restBanner=responseData['data']['banner_img'];
+          print(director);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+
+
+  Future<void> hitRecently() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+
+    final response = await http.get(
+      Uri.parse(user_songs),
+      headers: {
+        'Authorization': 'Bearer $token', // Adding the token to the headers
+      },
+    );
+
+
+
+    // if (response.statusCode == 200) {
+    //   final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+
+        if (responseData.containsKey('UserSongs')) {
+          final List<dynamic> songsJson = responseData['UserSongs'];
+
+          setState(() {
+            // Clear the list before adding new data
+            recentlySong.clear();
+            MusicService.apiData.clear();
+
+            // Parse each song from JSON and add it to the list
+            for (var songJson in songsJson) {
+              final song = Music(
+                title: songJson['title'],
+                artist: songJson['singer'][0]['name'].toString(),
+                album: songJson['album']['name'],
+                imagealbum: songJson['album']['image_data'],
+                url: songJson['file_data'],
+                song_lyrics: songJson['song_lyrics'].toString(),
+                image: songJson['image_data'],
+                id: songJson['id'].toString(),
+                subtitle: songJson['subtitle'],
+                singer_id: songJson['singer_id'].toString(),
+                year: songJson['year'].toString(),
+                album_id: songJson['album_id'].toString(),
+                mood_id: songJson['mood_id'].toString(),
+                language_id: songJson['language_id'].toString(),
+                genre_id: songJson['genre_id'].toString(),
+                music_director_id: songJson['music_director_id'].toString(),
+                file_data: songJson['file_data'],
+                image_data: songJson['image_data'],
+                status: songJson['status'],
+                release_date: songJson['release_date'],
+                like_flag: songJson['like_flag'],
+              );
+              // MusicService.recntlyModel.clear();
+              //
+              // MusicService.recntlyModel.addAll(recentlySong.map((song) => AudioSource.uri(
+              //         Uri.parse(song.file_data),
+              //         tag: musicToMediaItem(song),
+              //       )).toList());
+
+              // MusicService.apiData.add(song);
+              recentlySong.add(song);
+            }
+          });
+        } else {
+          throw Exception('Invalid API response: Missing "data" key');
+        }
+      } else {
+        throw Exception('Failed to load songs: ${response.statusCode}');
+      }
+
+
+
+      // if (responseData.containsKey('UserSongs')) {
+      //   setState(() {
+      //     recentlySong = responseData['UserSongs'];
+      //     print(recentlySong);
+      //   });
+      // } else {
+      //   throw Exception('Invalid API response: Missing "directors" key');
+      // }
+    // }
+  }
+
 
   @override
-  ScrollPhysics getScrollPhysics(BuildContext context) =>
-      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+  Widget build(BuildContext context) {
+    return
+      _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+              color: Colors.white,
+            ))
+          :
+      RefreshIndicator(
+        onRefresh: _handleRefresh,
+      child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    CarouselSlider(
+                        options: CarouselOptions(
+                          height: 100.sp,
+                          autoPlay: true,
+                          initialPage: 0,
+                          viewportFraction: 1,
+                          enableInfiniteScroll: true,
+                          reverse: false,
+                          autoPlayInterval: Duration(seconds: 3),
+                          autoPlayAnimationDuration: Duration(milliseconds: 800),
+                          autoPlayCurve: Curves.fastOutSlowIn,
+                          scrollDirection: Axis.horizontal,
+                        ),
+                        items: (banner.length > 0)
+                            ? banner.map((e) {
+                                return Builder(
+                                  builder: (context) {
+                                    return InkWell(
+                                      onTap: () {},
+                                      child: Padding(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 0, vertical: 0),
+                                        child: Material(
+                                          borderRadius: BorderRadius.circular(0.0),
+                                          clipBehavior: Clip.hardEdge,
+                                          child: Container(
+                                            height: 100.sp,
+                                            width: double.infinity,
+
+        //                                            padding: EdgeInsets.symmetric(horizontal: 10.0,vertical: 10.0),
+                                            decoration: BoxDecoration(
+                                              color: white_color,
+                                              borderRadius:
+                                                  BorderRadius.circular(20.0),
+                                            ),
+                                            child:   ClipRRect(
+                                              borderRadius:
+                                              BorderRadius.circular(0.0),
+                                              child: CachedNetworkImage(
+                                                imageUrl:  e['image_data'],
+                                                fit: BoxFit.fill, // Adjust this according to your requirement
+                                                placeholder: (context, url) => Center(
+                                                  child: CircularProgressIndicator(
+                                                    color: Colors.orangeAccent,
+                                                  ),
+                                                ),
+                                                errorWidget: (context, url, error) => Image.asset(
+                                                  'assets/no_image.jpg', // Path to your default image asset
+                                                  // Adjust width as per your requirement
+                                                  fit: BoxFit.cover, // Adjust this according to your requirement
+                                                ),
+                                              ),
+
+                                            ),
+
+
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              }).toList()
+                            : banner.map((e) {
+                                return Builder(builder: (context) {
+                                  return Container(
+                                    height: 100.sp,
+                                    width: MediaQuery.of(context).size.width * 0.90,
+                                    margin: EdgeInsets.symmetric(horizontal: 5.0),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20.0),
+                                    ),
+                                  );
+                                });
+                              }).toList()),
+
+                    Visibility(
+                      visible: recentlySong.isNotEmpty,
+                      child: Column(
+                        children: [
+                          //  recently view all
+                          SizedBox(
+                            height: 50.sp,
+                            child: Column(children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 0.0),
+                                child: SizedBox(
+                                  height: 50.sp,
+                                  child: ListView.builder(
+                                      itemCount: 1,
+                                      physics: NeverScrollableScrollPhysics(),
+                                      itemBuilder: (context, index) {
+                                        return ListTile(
+                                          title: Text(
+                                            'Recently Songs',
+                                            style: GoogleFonts.poppins(
+                                              textStyle: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: TextSizes.textlarge,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                          trailing: GestureDetector(
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) {
+                                                    return RecentlySongsClass(
+                                                      name: 'Recently',
+                                                    );
+                                                  },
+                                                ),
+                                              );
+
+                                            },
+                                            child: Text(
+                                              'View All',
+                                              style: GoogleFonts.poppins(
+                                                textStyle: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: TextSizes.textlarge,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }),
+                                ),
+                              ),
+                            ]),
+                          ),
+                          // recntly list
+                          SizedBox(
+                            height: TextSizes.SizeBoxMain,
+                            child: Column(children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: SizedBox(
+                                  height: TextSizes.SizeBoxSub,
+                                  child: ListView.builder(
+                                    itemCount: recentlySong.length,
+                                    scrollDirection: Axis.horizontal,
+                                    itemBuilder: (context, index) =>
+                                        GestureDetector(
+                                            onTap: () async {
+
+
+                                              musicService.playSongAtIndex3(index);
+
+
+                                              final SharedPreferences prefs =
+                                              await SharedPreferences.getInstance();
+                                              final String? token = prefs.getString('token');
+                                              prefs.remove('singleSong');
+
+                                              final response = await http.post(
+                                                Uri.parse(userSongs),
+                                                headers: {
+                                                  'Content-Type': 'application/json',
+                                                  'Authorization': 'Bearer $token',
+                                                },
+                                                body: jsonEncode({
+                                                  'song_id': recentlySong[index].id.toString(),
+                                                }),
+                                              );
+
+                                              if (response.statusCode == 200) {
+                                                return json.decode(response.body);
+                                              } else {
+                                                throw Exception(
+                                                    'Failed to load recently songs');
+                                              }
+
+
+
+
+                                              // musicService.playSong(
+                                              //     recentlySong[index]['song']['id']
+                                              //         .toString(),
+                                              //     recentlySong[index]['song']
+                                              //             ['file_data']
+                                              //         .toString(),
+                                              //     recentlySong[index]['song']
+                                              //         ['image_data'],
+                                              //     recentlySong[index]['song']
+                                              //         ['title'],
+                                              //     recentlySong[index]['song']
+                                              //         ['subtitle']);
+
+                                              // hitUserSongs(recentlySong[index]
+                                              //         ['song']['id']
+                                              //     .toString());
+
+                                              // final SharedPreferences prefs = await SharedPreferences.getInstance();
+                                              // prefs.setString('singleSong','singleSong');
+                                              //
+                                              //     (audioObject) => currentlyPlaying.value = audioObject;
+
+
+                                              //
+                                              // (context as Element)
+                                              //     .findAncestorStateOfType<
+                                              //         BottomNavBarDemoState>()
+                                              //     ?.toggleMiniPlayerVisibility(
+                                              //         true);
+                                            },
+                                            child: Column(
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(0.0),
+                                                  child: Column(
+                                                    children: [
+                                                      SizedBox(
+                                                        height:
+                                                            TextSizes.imageheight,
+                                                        width: TextSizes.imagewidth,
+                                                        child: Card(
+                                                          color: Colors.white,
+                                                          shape:
+                                                              RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(15.0),
+                                                          ),
+                                                          child:    ClipRRect(
+                                                            borderRadius:
+                                                            BorderRadius.circular(10.0),
+                                                            child: CachedNetworkImage(
+                                                              imageUrl:  recentlySong[index].image.toString(),
+                                                              fit: BoxFit.fill, // Adjust this according to your requirement
+                                                              placeholder: (context, url) => Center(
+                                                                child: CircularProgressIndicator(
+                                                                  color: Colors.orangeAccent,
+                                                                ),
+                                                              ),
+                                                              errorWidget: (context, url, error) => Image.asset(
+                                                                'assets/no_image.jpg', // Path to your default image asset
+                                                                 // Adjust width as per your requirement
+                                                                fit: BoxFit.cover, // Adjust this according to your requirement
+                                                              ),
+                                                            ),
+
+                                                          ),
+
+
+
+
+
+
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width: 100.sp,
+                                                  child: Center(
+                                                    child: Text(
+                                                      recentlySong[index].title
+                                                          .toString(),
+                                                      style: GoogleFonts.poppins(
+                                                        textStyle: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: TextSizes
+                                                                .textsmallPlayer,
+                                                            fontWeight:
+                                                                FontWeight.normal,
+                                                            overflow: TextOverflow
+                                                                .ellipsis),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    SizedBox(
+                                                      width: 100.sp,
+                                                      child: Center(
+                                                        child: Text(
+                                                              // '${recentlySong[index].album.toString()} ${'/'}'
+                                                              ' ${recentlySong[index].artist.toString()}',
+                                                            style: TextStyle(
+                                                              color: Colors.grey,
+                                                              fontSize: TextSizes
+                                                                  .textsmall,
+                                                            ),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow
+                                                                .ellipsis),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            )),
+                                  ),
+                                ),
+                              ),
+                            ]),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Visibility(
+                    //   visible: trendingAlbum.isNotEmpty,
+                    //   child: Column(
+                    //     children: [
+                    //       // trending view all
+                    //       SizedBox(
+                    //         height: 50.sp,
+                    //         child: Column(children: [
+                    //           Padding(
+                    //             padding: const EdgeInsets.only(top: 0.0),
+                    //             child: SizedBox(
+                    //               height: 50.sp,
+                    //               child: ListView.builder(
+                    //                   itemCount: 1,
+                    //                   physics: NeverScrollableScrollPhysics(),
+                    //                   // scrollDirection: Axis.horizontal,
+                    //                   itemBuilder: (context, index) {
+                    //                     return ListTile(
+                    //                       title: Text(
+                    //                         'Trending Now',
+                    //                         style: GoogleFonts.poppins(
+                    //                           textStyle: TextStyle(
+                    //                               color: Colors.white,
+                    //                               fontSize: TextSizes.textlarge,
+                    //                               fontWeight: FontWeight.bold),
+                    //                         ),
+                    //                       ),
+                    //                       trailing: GestureDetector(
+                    //                         onTap: () {
+                    //                           Navigator.push(
+                    //                             context,
+                    //                             MaterialPageRoute(
+                    //                               builder: (context) {
+                    //                                 return RecentlySongsClass(
+                    //                                   name: 'TrendingAlbum',
+                    //                                 );
+                    //                               },
+                    //                             ),
+                    //                           );
+                    //                         },
+                    //                         child: Text(
+                    //                           'View All',
+                    //                           style: GoogleFonts.poppins(
+                    //                             textStyle: TextStyle(
+                    //                               color: Colors.white,
+                    //                               fontSize: TextSizes.textlarge,
+                    //                               fontWeight: FontWeight.bold,
+                    //                             ),
+                    //                           ),
+                    //                         ),
+                    //                       ),
+                    //                     );
+                    //                   }),
+                    //             ),
+                    //           ),
+                    //         ]),
+                    //       ),
+                    //       // trending list
+                    //       SizedBox(
+                    //         height: TextSizes.SizeBoxMain,
+                    //         child: Column(children: [
+                    //           Padding(
+                    //             padding: const EdgeInsets.only(top: 8.0),
+                    //             child: SizedBox(
+                    //               height: TextSizes.SizeBoxSub,
+                    //               child: ListView.builder(
+                    //                   itemCount: trendingAlbum.length,
+                    //                   scrollDirection: Axis.horizontal,
+                    //                   itemBuilder: (context, index) {
+                    //                     final cartItem = trendingAlbum[index];
+                    //
+                    //                     return OpenContainer(
+                    //                       transitionType: ContainerTransitionType.fadeThrough,
+                    //                       closedColor: Theme.of(context).cardColor,
+                    //                       closedElevation: 0.0,
+                    //                       openElevation: 4.0,
+                    //                       transitionDuration: Duration(milliseconds: 500),
+                    //                       openBuilder: (BuildContext context, VoidCallback _) =>
+                    //
+                    //
+                    //                           SongsDeatilsList(
+                    //                         url:
+                    //                         cartItem['id'].toString(),
+                    //                         image: cartItem['image_data']
+                    //                             .toString(),
+                    //                         title: cartItem['name']
+                    //                             .toString(),
+                    //                         type: albumType,
+                    //                       ),
+                    //                       closedBuilder: (BuildContext _, VoidCallback openContainer) {
+                    //                         return Container(
+                    //                           color: Colors.black,
+                    //                           child: Column(
+                    //                             children: [
+                    //                               Padding(
+                    //                                 padding:
+                    //                                 const EdgeInsets.all(0.0),
+                    //                                 child: Column(
+                    //                                   children: [
+                    //                                     SizedBox(
+                    //                                       height:
+                    //                                       TextSizes.imageheight,
+                    //                                       width: TextSizes.imagewidth,
+                    //                                       child: Card(
+                    //                                         color: Colors.black,
+                    //                                         shape:
+                    //                                         RoundedRectangleBorder(
+                    //                                           borderRadius:
+                    //                                           BorderRadius
+                    //                                               .circular(15.0),
+                    //                                         ),
+                    //                                         child:  ClipRRect(
+                    //                                           borderRadius:
+                    //                                           BorderRadius.circular(10.0),
+                    //                                           child: CachedNetworkImage(
+                    //                                             imageUrl:  trendingAlbum[index]
+                    //                                             ['image_data']
+                    //                                                 .toString(),
+                    //                                             fit: BoxFit.fill, // Adjust this according to your requirement
+                    //                                             placeholder: (context, url) => Center(
+                    //                                               child: CircularProgressIndicator(
+                    //                                                 color: Colors.orangeAccent,
+                    //                                               ),
+                    //                                             ),
+                    //                                             errorWidget: (context, url, error) => Image.asset(
+                    //                                               'assets/no_image.jpg', // Path to your default image asset
+                    //                                               // Adjust width as per your requirement
+                    //                                               fit: BoxFit.cover, // Adjust this according to your requirement
+                    //                                             ),
+                    //                                           ),
+                    //
+                    //                                         ),
+                    //
+                    //
+                    //
+                    //                                       ),
+                    //                                     ),
+                    //                                   ],
+                    //                                 ),
+                    //                               ),
+                    //                               SizedBox(
+                    //                                 width: 100.sp,
+                    //                                 child: Center(
+                    //                                   child: Text(
+                    //                                     trendingAlbum[index]['name']
+                    //                                         .toString(),
+                    //                                     style: GoogleFonts.poppins(
+                    //                                       textStyle: TextStyle(
+                    //                                           color: Colors.white,
+                    //                                           fontSize: TextSizes
+                    //                                               .textsmallPlayer,
+                    //                                           fontWeight:
+                    //                                           FontWeight.normal,
+                    //                                           overflow: TextOverflow
+                    //                                               .ellipsis),
+                    //                                     ),
+                    //                                   ),
+                    //                                 ),
+                    //                               ),
+                    //                             ],
+                    //                           ),
+                    //                         );
+                    //                       },
+                    //                     );
+                    //
+                    //
+                    //                       // GestureDetector(
+                    //                       //   onTap: () {
+                    //                       //     Navigator.push(
+                    //                       //       context,
+                    //                       //       MaterialPageRoute(
+                    //                       //         builder: (context) {
+                    //                       //           return SongsDeatilsList(
+                    //                       //             url:
+                    //                       //                 cartItem['id'].toString(),
+                    //                       //             image: cartItem['image_data']
+                    //                       //                 .toString(),
+                    //                       //             title: cartItem['name']
+                    //                       //                 .toString(),
+                    //                       //             type: albumType,
+                    //                       //           );
+                    //                       //         },
+                    //                       //       ),
+                    //                       //     );
+                    //                       //   },
+                    //                       //   child: Column(
+                    //                       //     children: [
+                    //                       //       Padding(
+                    //                       //         padding:
+                    //                       //             const EdgeInsets.all(0.0),
+                    //                       //         child: Column(
+                    //                       //           children: [
+                    //                       //             SizedBox(
+                    //                       //               height:
+                    //                       //                   TextSizes.imageheight,
+                    //                       //               width: TextSizes.imagewidth,
+                    //                       //               child: Card(
+                    //                       //                 color: Colors.white,
+                    //                       //                 shape:
+                    //                       //                     RoundedRectangleBorder(
+                    //                       //                   borderRadius:
+                    //                       //                       BorderRadius
+                    //                       //                           .circular(15.0),
+                    //                       //                 ),
+                    //                       //                 child:  ClipRRect(
+                    //                       //                   borderRadius:
+                    //                       //                   BorderRadius.circular(10.0),
+                    //                       //                   child: CachedNetworkImage(
+                    //                       //                     imageUrl:  trendingAlbum[index]
+                    //                       //                     ['image_data']
+                    //                       //                         .toString(),
+                    //                       //                     fit: BoxFit.fill, // Adjust this according to your requirement
+                    //                       //                     placeholder: (context, url) => Center(
+                    //                       //                       child: CircularProgressIndicator(
+                    //                       //                         color: Colors.orangeAccent,
+                    //                       //                       ),
+                    //                       //                     ),
+                    //                       //                     errorWidget: (context, url, error) => Image.asset(
+                    //                       //                       'assets/no_image.jpg', // Path to your default image asset
+                    //                       //                       // Adjust width as per your requirement
+                    //                       //                       fit: BoxFit.cover, // Adjust this according to your requirement
+                    //                       //                     ),
+                    //                       //                   ),
+                    //                       //
+                    //                       //                 ),
+                    //                       //
+                    //                       //
+                    //                       //
+                    //                       //               ),
+                    //                       //             ),
+                    //                       //           ],
+                    //                       //         ),
+                    //                       //       ),
+                    //                       //       SizedBox(
+                    //                       //         width: 100.sp,
+                    //                       //         child: Center(
+                    //                       //           child: Text(
+                    //                       //             trendingAlbum[index]['name']
+                    //                       //                 .toString(),
+                    //                       //             style: GoogleFonts.poppins(
+                    //                       //               textStyle: TextStyle(
+                    //                       //                   color: Colors.white,
+                    //                       //                   fontSize: TextSizes
+                    //                       //                       .textsmallPlayer,
+                    //                       //                   fontWeight:
+                    //                       //                       FontWeight.normal,
+                    //                       //                   overflow: TextOverflow
+                    //                       //                       .ellipsis),
+                    //                       //             ),
+                    //                       //           ),
+                    //                       //         ),
+                    //                       //       ),
+                    //                       //     ],
+                    //                       //   )
+                    //                       // );
+                    //                   }),
+                    //             ),
+                    //           ),
+                    //         ]),
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
+
+                    //  bollywood view all
+                    SizedBox(
+                      height: 50.sp,
+                      child: Column(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 0.0),
+                          child: SizedBox(
+                            height: 50.sp,
+                            child: ListView.builder(
+                                itemCount: 1,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  return ListTile(
+                                    title: Text(
+                                      'BollyWood Masala',
+                                      style: GoogleFonts.poppins(
+                                        textStyle: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: TextSizes.textlarge,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    trailing: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return RecentlySongsClass(
+                                                name: 'Bollywood',
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        'View All',
+                                        style: GoogleFonts.poppins(
+                                          textStyle: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: TextSizes.textlarge,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                          ),
+                        ),
+                      ]),
+                    ),
+                    // bollywood list
+                    SizedBox(
+                      height: TextSizes.SizeBoxMain,
+                      child: Column(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: SizedBox(
+                            height: TextSizes.SizeBoxSub,
+                            child: ListView.builder(
+                                itemCount: bollywoodAlbum.length,
+                                scrollDirection: Axis.horizontal,
+                                itemBuilder: (context, index) {
+                                  final cartItem = bollywoodAlbum[index];
+
+                                  return GestureDetector(
+                                      onTap: () {
+
+                                        // Navigator.pushNamed(context, '/detailsWishlist');
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return SongsDeatilsList(
+                                                url: cartItem['id'].toString(),
+                                                image: cartItem['image_data'],
+                                                title: cartItem['name'],
+                                                type: albumType,
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(0.0),
+                                            child: Column(
+                                              children: [
+                                                SizedBox(
+                                                  height: TextSizes.imageheight,
+                                                  width: TextSizes.imagewidth,
+                                                  child: Card(
+                                                    color: Colors.white,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              15.0),
+                                                    ),
+                                                    child:  ClipRRect(
+                                                      borderRadius:
+                                                      BorderRadius.circular(10.0),
+                                                      child: CachedNetworkImage(
+                                                        imageUrl: bollywoodAlbum[index]
+                                                        ['image_data']
+                                                            .toString(),
+                                                        fit: BoxFit.fill, // Adjust this according to your requirement
+                                                        placeholder: (context, url) => Center(
+                                                          child: CircularProgressIndicator(
+                                                            color: Colors.orangeAccent,
+                                                          ),
+                                                        ),
+                                                        errorWidget: (context, url, error) => Image.asset(
+                                                          'assets/no_image.jpg', // Path to your default image asset
+                                                          // Adjust width as per your requirement
+                                                          fit: BoxFit.cover, // Adjust this according to your requirement
+                                                        ),
+                                                      ),
+
+                                                    ),
+
+
+
+
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Text(
+                                            bollywoodAlbum[index]['name']
+                                                .toString(),
+                                            style: GoogleFonts.poppins(
+                                              textStyle: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: TextSizes.textsmallPlayer,
+                                                  fontWeight: FontWeight.normal),
+                                            ),
+                                          ),
+                                          // Row(
+                                          //   children: [
+                                          //     Text(
+                                          //       'Sachet Tandon',
+                                          //       style:
+                                          //       GoogleFonts.poppins(
+                                          //         textStyle:
+                                          //         const TextStyle(
+                                          //             color:
+                                          //             Colors.grey,
+                                          //             fontSize: 11,
+                                          //             fontWeight:
+                                          //             FontWeight
+                                          //                 .normal),
+                                          //       ),
+                                          //     ),
+                                          //   ],
+                                          // ),
+                                        ],
+                                      ));
+                                }),
+                          ),
+                        ),
+                      ]),
+                    ),
+
+                    //  albums view all
+                    SizedBox(
+                      height: 50.sp,
+                      child: Column(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 0.0),
+                          child: SizedBox(
+                            height: 50.sp,
+                            child: ListView.builder(
+                                itemCount: 1,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  return ListTile(
+                                    title: Text(
+                                      'All Albums',
+                                      style: GoogleFonts.poppins(
+                                        textStyle: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: TextSizes.textlarge,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    trailing: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return RecentlySongsClass(
+                                                name: 'Albums',
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        'View All',
+                                        style: GoogleFonts.poppins(
+                                          textStyle: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: TextSizes.textlarge,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                          ),
+                        ),
+                      ]),
+                    ),
+                    // albums list
+                    SizedBox(
+                      height: TextSizes.SizeBoxMain,
+                      child: Column(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: SizedBox(
+                            height: TextSizes.SizeBoxSub,
+                            child: ListView.builder(
+                                itemCount: albums.length,
+                                scrollDirection: Axis.horizontal,
+                                reverse: false,
+                                itemBuilder: (context, index) {
+                                  final cartItem = albums[index];
+
+                                  return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return SongsDeatilsList(
+                                                url: cartItem['id'].toString(),
+                                                image: cartItem['image_data'],
+                                                title: cartItem['name'],
+                                                type: albumType,
+                                              );
+                                            },
+                                          ),
+                                        );
+                                        // Navigator.push(
+                                        //   context,
+                                        //   MaterialPageRoute(
+                                        //     builder: (context) {
+                                        //       return SongsDeatilsList();
+                                        //     },
+                                        //   ),
+                                        // );
+                                      },
+                                      child: Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(0.0),
+                                            child: Column(
+                                              children: [
+                                                SizedBox(
+                                                  height: TextSizes.imageheight,
+                                                  width: TextSizes.imagewidth,
+                                                  child: Card(
+                                                    color: Colors.white,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              15.0),
+                                                    ),
+                                                    child:  ClipRRect(
+                                                      borderRadius:
+                                                      BorderRadius.circular(10.0),
+                                                      child: CachedNetworkImage(
+                                                        imageUrl:albums[index]
+                                                        ['image_data']
+                                                            .toString(),
+                                                        fit: BoxFit.fill, // Adjust this according to your requirement
+                                                        placeholder: (context, url) => Center(
+                                                          child: CircularProgressIndicator(
+                                                            color: Colors.orangeAccent,
+                                                          ),
+                                                        ),
+                                                        errorWidget: (context, url, error) => Image.asset(
+                                                          'assets/no_image.jpg', // Path to your default image asset
+                                                          // Adjust width as per your requirement
+                                                          fit: BoxFit.cover, // Adjust this according to your requirement
+                                                        ),
+                                                      ),
+
+                                                    ),
+
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Text(
+                                            albums[index]['name'].toString(),
+                                            style: GoogleFonts.poppins(
+                                              textStyle: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: TextSizes.textsmallPlayer,
+                                                  fontWeight: FontWeight.normal),
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                albums[index]['name'].toString(),
+                                                style: GoogleFonts.poppins(
+                                                  textStyle: TextStyle(
+                                                      color: Colors.grey,
+                                                      fontSize: TextSizes.textsmall,
+                                                      fontWeight:
+                                                          FontWeight.normal),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ));
+                                }),
+                          ),
+                        ),
+                      ]),
+                    ),
+
+                    // Artist Stations list
+                    SizedBox(
+                      height: 240.sp,
+                      child: Column(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            left: 10.0,
+                            top: 20,
+                          ),
+                          child: Column(children: [
+                            Row(children: [
+                              Text(
+                                'Recommennded Artist Stations',
+                                style: GoogleFonts.poppins(
+                                  textStyle: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: TextSizes.textlarge,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ]),
+                          ]),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: SizedBox(
+                            height: 185.sp,
+                            child: ListView.builder(
+                                itemCount: artists.length,
+                                scrollDirection: Axis.horizontal,
+                                itemBuilder: (context, index) {
+                                  final cartItem = artists[index];
+
+                                  return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return SongsDeatilsList(
+                                                url: cartItem['id'].toString(),
+                                                image: cartItem['image_data'],
+                                                title: cartItem['name'],
+                                                type: artistType,
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Column(
+                                        children: [
+                                          Stack(
+                                            children: [
+                                              Card(
+                                                  color: Colors.grey,
+                                                  elevation: 4.0,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(
+                                                        100.0), // Adjust the value as needed
+                                                  ),
+                                                  margin: const EdgeInsets.all(10),
+                                                  child: SizedBox(
+                                                    height: 120.sp,
+                                                    width: 120.sp,
+                                                    child: Column(
+                                                      // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                      children: [
+                                                        Padding(
+                                                          padding: EdgeInsets.only(
+                                                            left: 0.0,
+                                                            top: 0,
+                                                          ),
+                                                        )
+                                                      ],
+                                                    ),
+                                                  )),
+                                              Center(
+                                                child: Card(
+                                                    elevation: 4.0,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              100), // Adjust the value as needed
+                                                    ),
+                                                    margin: EdgeInsets.all(13.sp),
+                                                    child: SizedBox(
+                                                      height: 110.sp,
+                                                      width: 110.sp,
+                                                      child: Column(
+                                                        // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                              left: 0.0,
+                                                              top: 0,
+                                                            ),
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .only(
+                                                                      top: 0.0),
+
+                                                              child: ClipOval(
+                                                                child: Container(
+                                                                    width: 110.sp,
+                                                                    // Adjust the width and height as needed
+                                                                    height: 110.sp,
+                                                                    color:
+                                                                        Colors.blue,
+                                                                    // Background color of the circular container
+                                                                    // child: Image.network(
+                                                                    //   apiData[index]['image_data'].toString(),fit: BoxFit.cover,
+                                                                    // )
+                                                                    child:  CachedNetworkImage(
+                                                                      imageUrl: artists[index]
+                                                                      [
+                                                                      'image_data']
+                                                                          .toString(),
+                                                                      fit: BoxFit.fill, // Adjust this according to your requirement
+                                                                      placeholder: (context, url) => Center(
+                                                                        child: CircularProgressIndicator(
+                                                                          color: Colors.orangeAccent,
+                                                                        ),
+                                                                      ),
+                                                                      errorWidget: (context, url, error) => Image.asset(
+                                                                        'assets/no_image.jpg', // Path to your default image asset
+                                                                        // Adjust width as per your requirement
+                                                                        fit: BoxFit.cover, // Adjust this according to your requirement
+                                                                      ),
+                                                                    ),
+
+                                                                ),
+                                                              ),
+
+                                                            ),
+                                                          )
+                                                        ],
+                                                      ),
+                                                    )),
+                                              ),
+                                            ],
+                                          ),
+                                          Text(
+                                            artists[index]['name'].toString(),
+                                            style: GoogleFonts.poppins(
+                                              textStyle: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: TextSizes.textsmallPlayer,
+                                                  fontWeight: FontWeight.normal),
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                'Artist Radio',
+                                                style: GoogleFonts.poppins(
+                                                  textStyle: TextStyle(
+                                                      color: Colors.grey,
+                                                      fontSize: TextSizes.textsmall,
+                                                      fontWeight:
+                                                          FontWeight.normal),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ));
+                                }),
+                          ),
+                        ),
+                      ]),
+                    ),
+
+                    SizedBox(
+                      height: 50.sp,
+                      child: Column(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 0.0),
+                          child: SizedBox(
+                            height: 50.sp,
+                            child: ListView.builder(
+                                itemCount: 1,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  return ListTile(
+                                    title: Text(
+                                      'Top Charts',
+                                      style: GoogleFonts.poppins(
+                                        textStyle: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: TextSizes.textlarge,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    trailing: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return RecentlySongsClass(
+                                                name: 'TopChart',
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        'View All',
+                                        style: GoogleFonts.poppins(
+                                          textStyle: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: TextSizes.textlarge,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                          ),
+                        ),
+                      ]),
+                    ),
+                    // top charts list
+                    SizedBox(
+                      height: TextSizes.SizeBoxMain,
+                      child: Column(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: SizedBox(
+                            height: TextSizes.SizeBoxSub,
+                            child: ListView.builder(
+                                itemCount: topCharts.length,
+                                scrollDirection: Axis.horizontal,
+                                itemBuilder: (context, index) {
+                                  final cartItem = topCharts[index];
+
+                                  return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return SongsDeatilsList(
+                                                url: cartItem['id'].toString(),
+                                                image: cartItem['image_data']
+                                                    .toString(),
+                                                title: cartItem['playlist_name']
+                                                    .toString(),
+                                                type: playlistType,
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(0.0),
+                                            child: Column(
+                                              children: [
+                                                SizedBox(
+                                                  height: TextSizes.imageheight,
+                                                  width: TextSizes.imagewidth,
+                                                  child: Card(
+                                                    color: Colors.white,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              15.0),
+                                                    ),
+                                                    child:   ClipRRect(
+                                                      borderRadius:
+                                                      BorderRadius.circular(10.0),
+                                                      child: CachedNetworkImage(
+                                                        imageUrl:topCharts[index]
+                                                        ['image_data']
+                                                            .toString(),
+                                                        fit: BoxFit.fill, // Adjust this according to your requirement
+                                                        placeholder: (context, url) => Center(
+                                                          child: CircularProgressIndicator(
+                                                            color: Colors.orangeAccent,
+                                                          ),
+                                                        ),
+                                                        errorWidget: (context, url, error) => Image.asset(
+                                                          'assets/no_image.jpg', // Path to your default image asset
+                                                          // Adjust width as per your requirement
+                                                          fit: BoxFit.cover, // Adjust this according to your requirement
+                                                        ),
+                                                      ),
+
+                                                    ),
+
+
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Text(
+                                            topCharts[index]['playlist_name']
+                                                .toString(),
+                                            style: GoogleFonts.poppins(
+                                              textStyle: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: TextSizes.textsmallPlayer,
+                                                  fontWeight: FontWeight.normal),
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                topCharts[index]['description']
+                                                    .toString(),
+                                                style: GoogleFonts.poppins(
+                                                  textStyle: TextStyle(
+                                                      color: Colors.grey,
+                                                      fontSize: TextSizes.textsmall,
+                                                      fontWeight:
+                                                          FontWeight.normal),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ));
+                                }),
+                          ),
+                        ),
+                      ]),
+                    ),
+
+                    // playlistData view all
+                    SizedBox(
+                      height: 50.sp,
+                      child: Column(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 0.0),
+                          child: SizedBox(
+                            height: 50.sp,
+                            child: ListView.builder(
+                                itemCount: 1,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  return ListTile(
+                                    title: Text(
+                                      'Playlist',
+                                      style: GoogleFonts.poppins(
+                                        textStyle: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: TextSizes.textlarge,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    trailing: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return RecentlySongsClass(
+                                                name: 'Playlists',
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        'View All',
+                                        style: GoogleFonts.poppins(
+                                          textStyle: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: TextSizes.textlarge,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+
+                                  Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 10.0),
+                                          child: Text(
+                                            'Best Of 90s',
+                                            style: GoogleFonts.poppins(
+                                              textStyle: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 195.0),
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) {
+                                                    return RecentlySongsClass(
+                                                      name: 'Playlists',
+                                                    );
+                                                  },
+                                                ),
+                                              );
+                                            },
+                                            child: Text(
+                                              'View All',
+                                              style: GoogleFonts.poppins(
+                                                textStyle: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ]);
+                                }),
+                          ),
+                        ),
+                      ]),
+                    ),
+                    // playlistDatalist
+                    SizedBox(
+                      height: TextSizes.SizeBoxMain,
+                      child: Column(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: SizedBox(
+                            height: TextSizes.SizeBoxSub,
+                            child: ListView.builder(
+                                itemCount: playlists.length,
+                                scrollDirection: Axis.horizontal,
+                                itemBuilder: (context, index) {
+                                  final cartItem = playlists[index];
+
+                                  return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return SongsDeatilsList(
+                                                url: cartItem['id'].toString(),
+                                                image: cartItem['image_data']
+                                                    .toString(),
+                                                title: cartItem['playlist_name']
+                                                    .toString(),
+                                                type: playlistType,
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(0.0),
+                                            child: Column(
+                                              children: [
+                                                SizedBox(
+                                                  height: TextSizes.imageheight,
+                                                  width: TextSizes.imagewidth,
+                                                  child: Card(
+                                                    color: Colors.white,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              15.0),
+                                                    ),
+                                                    child: ClipRRect(
+                                                      borderRadius:
+                                                      BorderRadius.circular(10.0),
+                                                      child: CachedNetworkImage(
+                                                        imageUrl:playlists[index]
+                                                        ['image_data']
+                                                            .toString(),
+                                                        fit: BoxFit.fill, // Adjust this according to your requirement
+                                                        placeholder: (context, url) => Center(
+                                                          child: CircularProgressIndicator(
+                                                            color: Colors.orangeAccent,
+                                                          ),
+                                                        ),
+                                                        errorWidget: (context, url, error) => Image.asset(
+                                                          'assets/no_image.jpg', // Path to your default image asset
+                                                          // Adjust width as per your requirement
+                                                          fit: BoxFit.cover, // Adjust this according to your requirement
+                                                        ),
+                                                      ),
+
+                                                    ),
+
+
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: 100.sp,
+                                            child: Center(
+                                              child: Text(
+                                                playlists[index]['playlist_name']
+                                                    .toString(),
+                                                // playlists[index]['name'].toString(),
+                                                style: GoogleFonts.poppins(
+                                                  textStyle: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize:
+                                                          TextSizes.textsmallPlayer,
+                                                      fontWeight: FontWeight.normal,
+                                                      overflow:
+                                                          TextOverflow.ellipsis),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              SizedBox(
+                                                width: 100.sp,
+                                                child: Center(
+                                                  child: Text(
+                                                    playlists[index]['description']
+                                                        .toString(),
+                                                    style: GoogleFonts.poppins(
+                                                      textStyle: TextStyle(
+                                                          color: Colors.grey,
+                                                          fontSize:
+                                                              TextSizes.textsmall,
+                                                          fontWeight:
+                                                              FontWeight.normal,
+                                                          overflow: TextOverflow
+                                                              .ellipsis),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ));
+                                }),
+                          ),
+                        ),
+                      ]),
+                    ),
+
+                    // new releasse view all
+                    SizedBox(
+                      height: 50.sp,
+                      child: Column(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 0.0),
+                          child: SizedBox(
+                            height: 50.sp,
+                            child: ListView.builder(
+                                itemCount: 1,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  return ListTile(
+                                    title: Text(
+                                      'New Releasse',
+                                      style: GoogleFonts.poppins(
+                                        textStyle: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: TextSizes.textlarge,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    trailing: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return RecentlySongsClass(
+                                                name: 'NewReleasse',
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        'View All',
+                                        style: GoogleFonts.poppins(
+                                          textStyle: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: TextSizes.textlarge,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                          ),
+                        ),
+                      ]),
+                    ),
+                    // new releasse list
+                    SizedBox(
+                      height: TextSizes.SizeBoxMain,
+                      child: Column(children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: SizedBox(
+                            height: TextSizes.SizeBoxSub,
+                            child: ListView.builder(
+                                itemCount: newReleas.length,
+                                scrollDirection: Axis.horizontal,
+                                itemBuilder: (context, index) {
+                                  final cartItem = newReleas[index];
+
+                                  return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return SongsDeatilsList(
+                                                url: cartItem['id'].toString(),
+                                                image: cartItem['image_data']
+                                                    .toString(),
+                                                title: cartItem['name'].toString(),
+                                                type: albumType,
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(0.0),
+                                            child: Column(
+                                              children: [
+                                                SizedBox(
+                                                  height: TextSizes.imageheight,
+                                                  width: TextSizes.imagewidth,
+                                                  child: Card(
+                                                    color: Colors.white,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              15.0),
+                                                    ),
+                                                    child:  ClipRRect(
+                                                      borderRadius:
+                                                      BorderRadius.circular(10.0),
+                                                      child: CachedNetworkImage(
+                                                        imageUrl:newReleas[index]
+                                                        ['image_data']
+                                                            .toString(),
+                                                        fit: BoxFit.fill, // Adjust this according to your requirement
+                                                        placeholder: (context, url) => Center(
+                                                          child: CircularProgressIndicator(
+                                                            color: Colors.orangeAccent,
+                                                          ),
+                                                        ),
+                                                        errorWidget: (context, url, error) => Image.asset(
+                                                          'assets/no_image.jpg', // Path to your default image asset
+                                                          // Adjust width as per your requirement
+                                                          fit: BoxFit.cover, // Adjust this according to your requirement
+                                                        ),
+                                                      ),
+
+                                                    ),
+
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: 100.sp,
+                                            child: Center(
+                                              child: Text(
+                                                newReleas[index]['name'].toString(),
+                                                style: GoogleFonts.poppins(
+                                                  textStyle: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize:
+                                                          TextSizes.textsmallPlayer,
+                                                      fontWeight: FontWeight.normal,
+                                                      overflow:
+                                                          TextOverflow.ellipsis),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          // Row(
+                                          //   children: [
+                                          //     Text(
+                                          //       newReleas[
+                                          //       index]['subtitle'].toString(),
+                                          //       style:
+                                          //       GoogleFonts.poppins(
+                                          //         textStyle:
+                                          //         const TextStyle(
+                                          //             color:
+                                          //             Colors.grey,
+                                          //             fontSize: 11,
+                                          //             fontWeight:
+                                          //             FontWeight
+                                          //                 .normal),
+                                          //       ),
+                                          //     ),
+                                          //   ],
+                                          // ),
+                                        ],
+                                      ));
+                                }),
+                          ),
+                        ),
+                      ]),
+                    ),
+
+
+
+                 //   Nested list View Start
+
+                    SingleChildScrollView(
+                      child: Padding(
+                        padding:  EdgeInsets.only(bottom: 45.sp),
+                        child: Column(
+                          children: category.map((category) {
+                            return SizedBox(
+                              child: Padding(
+                                padding:  EdgeInsets.only(bottom: 0.sp),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+
+                                    SizedBox(
+                                      height: 40.sp,
+                                      child: ListView.builder(
+                                          itemCount: 1,
+                                          physics: NeverScrollableScrollPhysics(),
+                                          itemBuilder: (context, index) {
+                                            return ListTile(
+                                              title: Text(
+                                                category['name'],
+                                                style: GoogleFonts.poppins(
+                                                  textStyle: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: TextSizes.textmedium,
+                                                      fontWeight: FontWeight.bold),
+                                                ),
+                                              ),
+                                              trailing: GestureDetector(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) {
+                                                        return CatergoryViewAllClass(
+                                                          name: category['name'],
+                                                          id: category['id'].toString(),
+                                                        );
+                                                      },
+                                                    ),
+                                                  );
+                                                },
+                                                child: Text(
+                                                  'View All',
+                                                  style: GoogleFonts.poppins(
+                                                    textStyle: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: TextSizes.textmedium,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                    ),
+
+                                    SizedBox(
+                                      height: TextSizes.SizeBoxMain,
+                                      child: Column(children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 8.0),
+                                          child: SizedBox(
+                                            height: TextSizes.SizeBoxSub,
+                                            child: ListView.builder(
+                                                itemCount:  category['playlist'].length,
+                                                scrollDirection: Axis.horizontal,
+                                                itemBuilder: (context, itemIndex) {
+                                                  final playlist =
+                                                  category['playlist'][itemIndex];
+                                                  return GestureDetector(
+                                                      onTap: () {
+                                                        Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                            builder: (context) {
+                                                              return SongsDeatilsList(
+                                                                url: category['playlist'][itemIndex]['id'].toString(),
+                                                                image: category['playlist'][itemIndex]['image_data']
+                                                                    .toString(),
+                                                                title: category['playlist'][itemIndex]['playlist_name'].toString(),
+                                                                type: 'playlist_id',
+                                                              );
+                                                            },
+                                                          ),
+                                                        );
+                                                      },
+                                                      child: Column(
+                                                        children: [
+                                                          Padding(
+                                                            padding: const EdgeInsets.all(0.0),
+                                                            child: Column(
+                                                              children: [
+                                                                SizedBox(
+                                                                  height: TextSizes.imageheight,
+                                                                  width: TextSizes.imagewidth,
+                                                                  child: Card(
+                                                                    color: Colors.white,
+                                                                    shape: RoundedRectangleBorder(
+                                                                      borderRadius:
+                                                                      BorderRadius.circular(
+                                                                          15.0),
+                                                                    ),
+                                                                    child:  ClipRRect(
+                                                                      borderRadius:
+                                                                      BorderRadius.circular(10.0),
+                                                                      child: CachedNetworkImage(
+                                                                        imageUrl:playlist
+                                                                        ['image_data']
+                                                                            .toString(),
+                                                                        fit: BoxFit.fill, // Adjust this according to your requirement
+                                                                        placeholder: (context, url) => Center(
+                                                                          child: CircularProgressIndicator(
+                                                                            color: Colors.orangeAccent,
+                                                                          ),
+                                                                        ),
+                                                                        errorWidget: (context, url, error) => Image.asset(
+                                                                          'assets/no_image.jpg', // Path to your default image asset
+                                                                          // Adjust width as per your requirement
+                                                                          fit: BoxFit.cover, // Adjust this according to your requirement
+                                                                        ),
+                                                                      ),
+
+                                                                    ),
+
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          SizedBox(
+                                                            width: 100.sp,
+                                                            child: Center(
+                                                              child: Text(
+                                                                playlist['playlist_name'].toString(),
+                                                                style: GoogleFonts.poppins(
+                                                                  textStyle: TextStyle(
+                                                                      color: Colors.white,
+                                                                      fontSize:
+                                                                      TextSizes.textsmallPlayer,
+                                                                      fontWeight: FontWeight.normal,
+                                                                      overflow:
+                                                                      TextOverflow.ellipsis),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          // Row(
+                                                          //   children: [
+                                                          //     Text(
+                                                          //       newReleas[
+                                                          //       index]['subtitle'].toString(),
+                                                          //       style:
+                                                          //       GoogleFonts.poppins(
+                                                          //         textStyle:
+                                                          //         const TextStyle(
+                                                          //             color:
+                                                          //             Colors.grey,
+                                                          //             fontSize: 11,
+                                                          //             fontWeight:
+                                                          //             FontWeight
+                                                          //                 .normal),
+                                                          //       ),
+                                                          //     ),
+                                                          //   ],
+                                                          // ),
+                                                        ],
+                                                      ));
+                                                }),
+                                          ),
+                                        ),
+                                      ]),
+                                    ),
+
+
+
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+
+            //       Nested list View close
+                  ],
+                ),
+              ),
+    );
+
+  }
+  void _audioPlayerTaskEntrypoint() {
+    AudioServiceBackground.run(() => MusicService());
+  }
+}
+
+class OnlyMusicScreen extends StatefulWidget {
+  OnlyMusicScreen({super.key});
+
+  @override
+  State<OnlyMusicScreen> createState() => _OnlyMusicScreenState();
+}
+
+class _OnlyMusicScreenState extends State<OnlyMusicScreen> {
+  MusicService musicService = MusicService();
+
+  PageController _pageController = PageController(initialPage: 0);
+
+  TabController? _tabController;
+
+  bool isDrawerOpen = false;
+
+  List<bool> _selections = [true, false];
+
+  int _selectedIndex = 0;
+
+  bool isLiked = false;
+
+  bool download = false;
+
+  int selectIndex = 0;
+
+  String searchQuery = '';
+
+  List<dynamic> hindiSong = [];
+  List<dynamic> punjabiSong = [];
+  List<dynamic> haryanviSong = [];
+  List<dynamic> bollywoodSong = [];
+  List<dynamic> trendingSong = [];
+  List<dynamic> newReleas = [];
+  List<dynamic> banner = [];
+  List<dynamic> category = [];
+
+  bool _isLoading = false;
+  final List<String> _images = [
+    'https://anyimage.io/storage/uploads/3141a9803708905d61a8954cb6bf7c35',
+    'https://anyimage.io/storage/uploads/174d0a05743022fac034353ef5701fb0',
+  ];
+  Future<void> hitAllcategory() async {
+    final response = await http.get(Uri.parse(playlistcategory));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('category')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          category = responseData['category'];
+          // restBanner=responseData['data']['banner_img'];
+          print(category);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitBanner() async {
+    final response = await http.get(Uri.parse(songbanner));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('banner')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          banner = responseData['banner'];
+          // restBanner=responseData['data']['banner_img'];
+          print(banner);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  void _startLoading() {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Simulate a 5-second delay
+    Future.delayed(Duration(seconds: 2), () {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // hitPunjabiSongs();
+    // hitHaryanviSongs();
+    // hitHindiSongs();
+    // hitBollywoodSongs();
+    // hitTrendingSongs();
+    // _startLoading();
+    // hitNewRelease();
+    // hitBanner();
+    // hitAllcategory();
+  }
+
+  Future<void> hitUserSongs(String id) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+
+    final response = await http.post(
+      Uri.parse(userSongs),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'song_id': id,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load recently songs');
+    }
+  }
+
+  Future<void> hitNewRelease() async {
+    final response = await http.get(Uri.parse(newRelease));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('songs')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          newReleas = responseData['songs'];
+          // restBanner=responseData['data']['banner_img'];
+          print(newReleas);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitPunjabiSongs() async {
+    final response = await http.get(Uri.parse(punjabiSongs));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('songs')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          punjabiSong = responseData['songs'];
+          // restBanner=responseData['data']['banner_img'];
+          print(punjabiSong);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitHaryanviSongs() async {
+    final response = await http.get(Uri.parse(haryanviSongs));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('songs')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          haryanviSong = responseData['songs'];
+          // restBanner=responseData['data']['banner_img'];
+          print(haryanviSong);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitHindiSongs() async {
+    final response = await http.get(Uri.parse(hindiSongs));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('songs')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          hindiSong = responseData['songs'];
+          // restBanner=responseData['data']['banner_img'];
+          print(hindiSong);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitBollywoodSongs() async {
+    final response = await http.get(Uri.parse(bollywoodSongs));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('songs')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          bollywoodSong = responseData['songs'];
+          // restBanner=responseData['data']['banner_img'];
+          print(bollywoodSong);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  Future<void> hitTrendingSongs() async {
+    final response = await http.get(Uri.parse(trendingSongsApi));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('trendingSongs')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          trendingSong = responseData['trendingSongs'];
+          // restBanner=responseData['data']['banner_img'];
+          print(trendingSong);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _isLoading
+        ? Center(
+            child: CircularProgressIndicator(
+            color: Colors.white,
+          ))
+        :  Center(
+      child: Text('Up Comming',
+        style: GoogleFonts.poppins(
+          textStyle: TextStyle(
+              color: Colors.green,
+              fontSize: TextSizes.textlarge,
+              fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+
+
+//     SingleChildScrollView(
+//             child: Container(
+//               child: Column(
+//                 children: [
+//                   CarouselSlider(
+//                       options: CarouselOptions(
+//                         height: 100.sp,
+//                         autoPlay: true,
+//                         initialPage: 0,
+//                         viewportFraction: 1,
+//                         enableInfiniteScroll: true,
+//                         reverse: false,
+//                         autoPlayInterval: Duration(seconds: 3),
+//                         autoPlayAnimationDuration: Duration(milliseconds: 800),
+//                         autoPlayCurve: Curves.fastOutSlowIn,
+//                         scrollDirection: Axis.horizontal,
+//                       ),
+//                       items: (banner.length > 0)
+//                           ? banner.map((e) {
+//                               return Builder(
+//                                 builder: (context) {
+//                                   return InkWell(
+//                                     onTap: () {},
+//                                     child: Padding(
+//                                       padding: EdgeInsets.symmetric(
+//                                           horizontal: 0, vertical: 0),
+//                                       child: Material(
+//                                         borderRadius:
+//                                             BorderRadius.circular(0.0),
+//                                         clipBehavior: Clip.hardEdge,
+//                                         child: Container(
+//                                           height: 100.sp,
+//                                           width: double.infinity,
+//
+// //                                            padding: EdgeInsets.symmetric(horizontal: 10.0,vertical: 10.0),
+//                                           decoration: BoxDecoration(
+//                                             color: white_color,
+//                                             borderRadius:
+//                                                 BorderRadius.circular(20.0),
+//                                           ),
+//                                           child: Image.network(
+//                                             e['image_data'],
+//                                             fit: BoxFit.fill,
+//                                           ),
+//                                         ),
+//                                       ),
+//                                     ),
+//                                   );
+//                                 },
+//                               );
+//                             }).toList()
+//                           : banner.map((e) {
+//                               return Builder(builder: (context) {
+//                                 return Container(
+//                                   height: 100.sp,
+//                                   width:
+//                                       MediaQuery.of(context).size.width * 0.90,
+//                                   margin: EdgeInsets.symmetric(horizontal: 5.0),
+//                                   decoration: BoxDecoration(
+//                                     borderRadius: BorderRadius.circular(20.0),
+//                                   ),
+//                                 );
+//                               });
+//                             }).toList()),
+//
+//                   // Nested list View Start
+//
+//                   SingleChildScrollView(
+//                     child: Column(
+//                       children: category.map((category) {
+//                         return SizedBox(
+//                           child: Padding(
+//                             padding: const EdgeInsets.only(bottom: 18.0),
+//                             child: Column(
+//                               crossAxisAlignment: CrossAxisAlignment.start,
+//                               children: <Widget>[
+//
+//                                 SizedBox(
+//                                   height: 40.sp,
+//                                   child: ListView.builder(
+//                                       itemCount: 1,
+//                                       physics: NeverScrollableScrollPhysics(),
+//                                       itemBuilder: (context, index) {
+//                                         return ListTile(
+//                                           title: Text(
+//                                             category['name'],
+//                                             style: GoogleFonts.poppins(
+//                                               textStyle: TextStyle(
+//                                                   color: Colors.white,
+//                                                   fontSize: TextSizes.textlarge,
+//                                                   fontWeight: FontWeight.bold),
+//                                             ),
+//                                           ),
+//                                           trailing: GestureDetector(
+//                                             onTap: () {
+//
+//                                             },
+//                                             child: Text(
+//                                               'View All',
+//                                               style: GoogleFonts.poppins(
+//                                                 textStyle: TextStyle(
+//                                                   color: Colors.white,
+//                                                   fontSize: TextSizes.textlarge,
+//                                                   fontWeight: FontWeight.bold,
+//                                                 ),
+//                                               ),
+//                                             ),
+//                                           ),
+//                                         );
+//                                       }),
+//                                 ),
+//
+//                                 SizedBox(
+//                                   height: 200,
+//                                   // Adjust the height of the horizontal ListView
+//                                   child: ListView.builder(
+//                                     scrollDirection: Axis.horizontal,
+//                                     itemCount: category['playlist'].length,
+//                                     itemBuilder:
+//                                         (BuildContext context, int itemIndex) {
+//                                       final playlist =
+//                                           category['playlist'][itemIndex];
+//
+//                                       return GestureDetector(
+//                                         onTap: () {
+//                                           Navigator.push(
+//                                             context,
+//                                             MaterialPageRoute(
+//                                               builder: (context) {
+//                                                 return SongsDeatilsList(
+//                                                   url: category['playlist'][itemIndex]['id'].toString(),
+//                                                   image: category['playlist'][itemIndex]['image_data']
+//                                                       .toString(),
+//                                                   title: category['playlist'][itemIndex]['playlist_name'].toString(),
+//                                                   type: 'playlist_id',
+//                                                 );
+//                                               },
+//                                             ),
+//                                           );
+//
+//                                         },
+//                                         child: Column(
+//                                           children: [
+//                                             Padding(
+//                                               padding: const EdgeInsets.all(8.0),
+//                                               child: SizedBox(
+//                                                 height: 150,
+//                                                 // Adjust the size of the image
+//                                                 width: 150,
+//                                                 // Adjust the size of the image
+//                                                 child: Card(
+//                                                   color: Colors.white,
+//                                                   shape: RoundedRectangleBorder(
+//                                                     borderRadius:
+//                                                         BorderRadius.circular(
+//                                                             15.0),
+//                                                   ),
+//                                                   child: ClipRRect(
+//                                                     borderRadius:
+//                                                         BorderRadius.circular(
+//                                                             10.0),
+//                                                     child: Image.network(
+//                                                       playlist['image_data'],
+//                                                       fit: BoxFit.cover,
+//                                                     ),
+//                                                   ),
+//                                                 ),
+//                                               ),
+//                                             ),
+//                                             SizedBox(
+//                                               width: 150,
+//                                               // Adjust the width of the text
+//                                               child: Center(
+//                                                 child: Text(
+//                                                   playlist['playlist_name'],
+//                                                   style: TextStyle(
+//                                                     color: Colors.white,
+//                                                     fontSize:
+//                                                         16, // Adjust the font size as needed
+//                                                   ),
+//                                                 ),
+//                                               ),
+//                                             ),
+//                                           ],
+//                                         ),
+//                                       );
+//                                     },
+//                                   ),
+//                                 ),
+//                               ],
+//                             ),
+//                           ),
+//                         );
+//                       }).toList(),
+//                     ),
+//                   ),
+//
+//                   // Nested list View close
+//                 ],
+//               ),
+//             ),
+//           );
+  }
+
 }

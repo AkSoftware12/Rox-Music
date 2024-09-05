@@ -1,26 +1,44 @@
 {
   "project_info": {
-    "project_number": "1043037196751",
-    "project_id": "rox-music-27c8a",
-    "storage_bucket": "rox-music-27c8a.appspot.com"
+    "project_number": "912153009740",
+    "project_id": "ring-music-player",
+    "storage_bucket": "ring-music-player.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1043037196751:android:58b3009980676393e8c2ba",
+        "mobilesdk_app_id": "1:912153009740:android:e05546e5714ae782fadee9",
         "android_client_info": {
-          "package_name": "com.rox_music_player"
+          "package_name": "com.ring.music"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "912153009740-hvrcmgerdbtt88jci9vtjb7uooou36fb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ring.music",
+            "certificate_hash": "c24604fc82655b71e28890aafb28cd52054df26e"
+          }
+        },
+        {
+          "client_id": "912153009740-pvkmsellgnlt1ubv0sam9ul7lc1d0pok.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyAZiRicMosfebispFPUKhWM_IsT2LkVL1g"
+          "current_key": "AIzaSyCtv6MbZ-NW9gX1N-5_MCeh45w1gdBhqHI"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "912153009740-pvkmsellgnlt1ubv0sam9ul7lc1d0pok.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

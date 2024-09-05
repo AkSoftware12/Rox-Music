@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:music_player_saavn/History%20Songs/history_songs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Auth/auth_service.dart';
-import '../Home/Home View All/recently_songs.dart';
+import '../Home/Home View All/All_tab_view_all.dart';
 import '../Login/login.dart';
 import '../Profile/profile.dart';
 import '../Seetings/settings.dart';
@@ -283,7 +283,7 @@ class _DashBoardScreenState extends State<ProfileDemoScreen> {
                                                         context,
                                                         MaterialPageRoute(
                                                           builder: (context) {
-                                                            return RecentlySongsClass();
+                                                            return RecentlySongsClass(name: '',);
                                                           },
                                                         ),
                                                       );
@@ -365,7 +365,7 @@ class _DashBoardScreenState extends State<ProfileDemoScreen> {
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (context) {
-                                                          return RecentlySongsClass();
+                                                          return RecentlySongsClass(name: '',);
                                                         },
                                                       ),
                                                     );
@@ -447,7 +447,7 @@ class _DashBoardScreenState extends State<ProfileDemoScreen> {
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (context) {
-                                                          return RecentlySongsClass();
+                                                          return RecentlySongsClass(name: '',);
                                                         },
                                                       ),
                                                     );
@@ -530,7 +530,7 @@ class _DashBoardScreenState extends State<ProfileDemoScreen> {
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (context) {
-                                                          return RecentlySongsClass();
+                                                          return RecentlySongsClass(name: '',);
                                                         },
                                                       ),
                                                     );
@@ -612,7 +612,7 @@ class _DashBoardScreenState extends State<ProfileDemoScreen> {
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (context) {
-                                                          return RecentlySongsClass();
+                                                          return RecentlySongsClass(name: '',);
                                                         },
                                                       ),
                                                     );
@@ -694,7 +694,7 @@ class _DashBoardScreenState extends State<ProfileDemoScreen> {
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (context) {
-                                                          return RecentlySongsClass();
+                                                          return RecentlySongsClass(name: '',);
                                                         },
                                                       ),
                                                     );
@@ -858,7 +858,7 @@ class _DashBoardScreenState extends State<ProfileDemoScreen> {
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (context) {
-                                                          return RecentlySongsClass();
+                                                          return RecentlySongsClass(name: '',);
                                                         },
                                                       ),
                                                     );

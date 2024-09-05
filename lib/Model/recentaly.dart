@@ -1,4 +1,5 @@
 class RecentlySongs {
+  final String id;
   final String url;
   final String title;
   final String image;
@@ -6,6 +7,7 @@ class RecentlySongs {
   bool isLiked;
 
   RecentlySongs( {
+    required this.id,
     required this.url,
     required this.title,
     required this.image,

@@ -1,7 +1,10 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
+import '../../../Home/Home Bottom/miniplayer.dart';
+import '../../../Home/Home Bottom/player.dart';
 import '../../data/models/player_page_arguments.dart';
 import '../../data/repositories/song_repository.dart';
 import '../components/song_list_tile.dart';
@@ -27,7 +30,11 @@ class _AlbumPageState extends State<AlbumPage> {
     _songs = [];
     _getSongs();
   }
+  void _refresh() {
+    setState(() {
 
+    });
+  }
   Future<void> _getSongs() async {
     final OnAudioQuery audioQuery = OnAudioQuery();
 
@@ -50,101 +57,119 @@ class _AlbumPageState extends State<AlbumPage> {
     return Scaffold(
 
       backgroundColor: Colors.black,
-      body: Ink(
-        padding: EdgeInsets.fromLTRB(
-          24,
-          MediaQuery.of(context).padding.top + 16,
-          24,
-          16,
-        ),
-        decoration: BoxDecoration(
-          // gradient: Themes.getTheme().linearGradient,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // back button
-            Row(
+      body: Stack(
+        children: [
+          Ink(
+            padding: EdgeInsets.fromLTRB(
+              24,
+              MediaQuery.of(context).padding.top + 16,
+              24,
+              16,
+            ),
+            decoration: BoxDecoration(
+              // gradient: Themes.getTheme().linearGradient,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                IconButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  icon: const Icon(Icons.arrow_back_ios),
+                // back button
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      icon: const Icon(Icons.arrow_back_ios),
+                    ),
+                  ],
+                ),
+                // album artwork
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: QueryArtworkWidget(
+                      id: widget.album.id,
+                      type: ArtworkType.ALBUM,
+                      artworkQuality: FilterQuality.high,
+                      nullArtworkWidget: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.music_note_outlined,
+                          size: 100,
+                        ),
+                      ),
+                      artworkBorder: BorderRadius.circular(10),
+                      artworkWidth: double.infinity,
+                      artworkHeight: double.infinity,
+                      artworkFit: BoxFit.fill,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // album name
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    widget.album.album,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                // artist name
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    widget.album.artist ?? 'Unknown',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // songs
+                Expanded(
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: _songs.length,
+                    itemBuilder: (context, index) {
+                      final SongModel song = _songs[index];
+                      final args = PlayerPageArguments(
+                        songs: _songs,
+                        initialIndex: index,
+                      );
+                      return SongListTile(
+                        song: song,
+                        args: args,
+                        showAlbumArt: false,
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
-            // album artwork
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: QueryArtworkWidget(
-                  id: widget.album.id,
-                  type: ArtworkType.ALBUM,
-                  artworkQuality: FilterQuality.high,
-                  nullArtworkWidget: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.music_note_outlined,
-                      size: 100,
-                    ),
-                  ),
-                  artworkBorder: BorderRadius.circular(10),
-                  artworkWidth: double.infinity,
-                  artworkHeight: double.infinity,
-                  artworkFit: BoxFit.fill,
-                ),
-              ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: OpenContainer(
+              transitionType: ContainerTransitionType.fadeThrough,
+              closedColor: Theme.of(context).cardColor,
+              closedElevation: 0.0,
+              openElevation: 4.0,
+              transitionDuration: Duration(milliseconds: 500),
+              openBuilder: (BuildContext context, VoidCallback _) =>  Player(onReturn: _refresh),
+              closedBuilder: (BuildContext _, VoidCallback openContainer) {
+                return MiniPlayer();
+              },
             ),
-            const SizedBox(height: 16),
-            // album name
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                widget.album.album,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            // artist name
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                widget.album.artist ?? 'Unknown',
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // songs
-            Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                itemCount: _songs.length,
-                itemBuilder: (context, index) {
-                  final SongModel song = _songs[index];
-                  final args = PlayerPageArguments(
-                    songs: _songs,
-                    initialIndex: index,
-                  );
-                  return SongListTile(
-                    song: song,
-                    args: args,
-                    showAlbumArt: false,
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

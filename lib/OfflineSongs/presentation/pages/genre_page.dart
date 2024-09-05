@@ -1,6 +1,9 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
+import '../../../Home/Home Bottom/miniplayer.dart';
+import '../../../Home/Home Bottom/player.dart';
 import '../../data/models/player_page_arguments.dart';
 import '../components/song_list_tile.dart';
 import '../utils/theme/themes.dart';
@@ -23,7 +26,11 @@ class _GenrePageState extends State<GenrePage> {
     _songs = [];
     _getSongs();
   }
+  void _refresh() {
+    setState(() {
 
+    });
+  }
   Future<void> _getSongs() async {
     final OnAudioQuery audioQuery = OnAudioQuery();
 
@@ -60,31 +67,49 @@ class _GenrePageState extends State<GenrePage> {
         ),
         ),
       ),
-      body: Ink(
-        decoration: BoxDecoration(
-          // gradient: Themes.getTheme().linearGradient,
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                itemCount: _songs.length,
-                itemBuilder: (context, index) {
-                  final SongModel song = _songs[index];
-                  final args = PlayerPageArguments(
-                    songs: _songs,
-                    initialIndex: index,
-                  );
-                  return SongListTile(
-                    song: song,
-                    args: args,
-                  );
-                },
-              ),
+      body: Stack(
+        children: [
+          Ink(
+            decoration: BoxDecoration(
+              // gradient: Themes.getTheme().linearGradient,
             ),
-          ],
-        ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: _songs.length,
+                    itemBuilder: (context, index) {
+                      final SongModel song = _songs[index];
+                      final args = PlayerPageArguments(
+                        songs: _songs,
+                        initialIndex: index,
+                      );
+                      return SongListTile(
+                        song: song,
+                        args: args,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: OpenContainer(
+              transitionType: ContainerTransitionType.fadeThrough,
+              closedColor: Theme.of(context).cardColor,
+              closedElevation: 0.0,
+              openElevation: 4.0,
+              transitionDuration: Duration(milliseconds: 500),
+              openBuilder: (BuildContext context, VoidCallback _) =>  Player(onReturn: _refresh),
+              closedBuilder: (BuildContext _, VoidCallback openContainer) {
+                return MiniPlayer();
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

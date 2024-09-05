@@ -18,6 +18,7 @@ class ArtistsView extends StatefulWidget {
 class _ArtistsViewState extends State<ArtistsView>
     with SingleTickerProviderStateMixin {
   // bool get wantKeepAlive => true;
+  bool _hasPermission = false;
 
   final audioQuery = OnAudioQuery();
   List<ArtistModel> items = [];
@@ -35,7 +36,7 @@ class _ArtistsViewState extends State<ArtistsView>
       backgroundColor: Colors.black,
 
       body: Center(
-        child:  FutureBuilder<List<ArtistModel>>(
+        child:   FutureBuilder<List<ArtistModel>>(
           // Default values:
           future: audioQuery.queryArtists(
             sortType: null,
@@ -142,4 +143,32 @@ class _ArtistsViewState extends State<ArtistsView>
     );
 
   }
+
+  checkAndRequestPermissions({bool retry = false}) async {
+    _hasPermission = await audioQuery.checkAndRequest(
+      retryRequest: retry,
+    );
+    _hasPermission ? setState(() {}) : null;
+  }
+  Widget noAccessToLibraryWidget() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: Colors.redAccent.withOpacity(0.5),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text("Application doesn't have access to the library"),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () => checkAndRequestPermissions(retry: true),
+            child: const Text("Allow"),
+          ),
+        ],
+      ),
+    );
+  }
+
 }

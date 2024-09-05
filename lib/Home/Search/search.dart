@@ -1,11 +1,69 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+
+import 'package:back_button_interceptor/back_button_interceptor.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:music_player_saavn/Home/Home%20View%20All/trending_now_view_all.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:music_player_saavn/ApiModel/SearchAllmodel/search_all_model.dart';
+import 'package:music_player_saavn/ApiModel/treading_songs.dart';
+import 'package:music_player_saavn/SearchSongs/search_songs.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:search_page/search_page.dart';
+import 'package:share/share.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../ApiModel/playModel.dart';
+import '../../ApiModel/searchSongsModel.dart';
 import '../../Model/recentaly.dart';
 import '../../Model/search.dart';
 import '../../Service/MusicService.dart';
+import '../../SongInfo/song_info.dart';
+import '../../Utils/textSize.dart';
+import '../Home View All/All_tab_view_all.dart';
+import '../Home View All/Music viewAll/music_view_all.dart';
 import '../HomeDeatils/home_deatils_song_list.dart';
 import '../HomeDeatils/weekly_forecast_list.dart';
+import 'package:http/http.dart' as http;
+
+import '../../baseurlp/baseurl.dart';
+import '../home.dart';
+
+
+
+
+class Song implements Comparable<Song>{
+  final String id;
+  final String title;
+  final String artist;
+  final String album;
+  final String imageUrl;
+
+  Song({
+    required this.id,
+    required this.title,
+    required this.artist,
+    required this.album,
+    required this.imageUrl,
+  });
+
+  factory Song.fromJson(Map<String, dynamic> json) {
+    return Song(
+      id: json['id'],
+      title: json['title'],
+      artist: json['artist'],
+      album: json['album'],
+      imageUrl: json['imageUrl'],
+    );
+  }
+
+  @override
+  int compareTo(Song other) => title.compareTo(other.title);
+}
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -16,104 +74,114 @@ class SearchScreen extends StatefulWidget {
 
 class _DashBoardScreenState extends State<SearchScreen> {
   TextEditingController _searchController = TextEditingController();
-
-  MusicService musicService = MusicService();
-  bool isLiked = false;
   bool download = false;
+  List<Music> apiData = [];
+  MusicService musicService = MusicService();
+  bool isLoading = false;
+  bool isPlaying = false;
+  bool isDataEmpty = true;
+  bool isLiked = false;
+  bool isDownloading = false;
+  double downloadProgress = 0.0;
+  List<dynamic> moodList = [];
+  List<dynamic> filteredList2 = [];
+  List<dynamic> trendingSong = [];
+  List<dynamic> filteredList = [];
+  late List<bool> isDownloadingList;
+  late List<double> downloadProgressList;
 
-  List<RecentlySongs> recently = [
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/113/6618ccbc327d1f238da8de775e07a693_96.mp4',
-        title: 'He Shiv Shankar',
-        subtitle: 'Satish Dehra',
-        image:
-            'https://c.saavncdn.com/113/He-Shiv-Shankar-Hindi-2020-20200214121917-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/529/34fec258d486adfae4d5faf460e6b519_96.mp4',
-        title: 'Shiv Shankara',
-        subtitle: 'Shreyas Puranik',
-        image:
-            'https://c.saavncdn.com/529/Shiv-Shankara-Hindi-2019-20190228184236-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/120/1fa9e474ab4df104cb3deecabd2ec342_96.mp4',
-        title: 'Man Mera Mandir,Shiv Meri Puja',
-        subtitle: 'Sameer Sen, Dilip Sen, Anuradha Paudwal',
-        image: 'https://c.saavncdn.com/120/Shiv-Aaradhna-1991-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/122/b8bc2c1a0de0010582dfdb33a1f06436_96.mp4',
-        title: 'Shiv Amritvaani',
-        subtitle: 'Surender Kohli, Anuradha Paudwal',
-        image: 'https://c.saavncdn.com/122/Shiv-Amritvani-1999-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/256/f912a4f10ab5505d5f80d7c87cdc23ab_96.mp4',
-        title: 'Shree Hanuman Chalisa',
-        subtitle: 'Hariharan - Shree Hanuman Chalisa (Hanuman Ashtak)',
-        image:
-            'https://c.saavncdn.com/256/Shree-Hanuman-Chalisa-Hanuman-Ashtak-Hindi-1992-20230904173628-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/835/4af7820e1519cc777b4bcb6549e23af2_96.mp4',
-        title: 'Bajrang Baan',
-        subtitle: 'Suresh Wadkar - Hanuman Chalisa',
-        image:
-            'https://c.saavncdn.com/835/Hanuman-Chalisa-Hindi-2016-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/222/fd095a4516b3a78ee065ea4e391ad39f_96.mp4',
-        title: 'Hanuman Aarti',
-        subtitle:
-            'Anup Jalota - Shree Ram Bhakt Hanuman Chalisa With Transcreation',
-        image:
-            'https://c.saavncdn.com/222/Shree-Ram-Bhakt-Hanuman-Chalisa-With-Transcreation-Telugu-2016-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/905/bb762b053b0704eb6a75be040e208c69_96.mp4',
-        title: 'Tujhe Yaad Na Meri Ayee-2',
-        subtitle: 'Tujhe Yaad Na Meri Ayee-2',
-        image:
-            'https://c.saavncdn.com/905/Tujhe-Yaad-Na-Meri-Ayee-2-Hindi-2023-20231107133527-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/318/1feec2b62321a4cbb9b5a29e179768b9_96.mp4',
-        title: 'Pehli Pehli Baar Mohabbat Ki Hai',
-        subtitle: 'Pehli Pehli Baar Mohabbat Ki Hai',
-        image:
-            'https://c.saavncdn.com/318/Sirf-Tum-Hindi-1999-20221205181935-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/255/802bd5104b367a501584c9955910168b_96.mp4',
-        title: 'Hamein Tumse Hua Pyar',
-        subtitle: 'Hamein Tumse Hua Pyar',
-        image:
-            'https://c.saavncdn.com/255/Ab-Tumhare-Hawale-Watan-Sathiyo-Hindi-2004-20221118021108-500x500.jpg'),
-    RecentlySongs(
-        url:
-            'https://aac.saavncdn.com/228/d28a57ac4d8bbc4bdc0dba65795c7add_96.mp4',
-        title: 'Main Nikla Gaddi Leke',
-        subtitle: 'Main Nikla Gaddi Leke',
-        image:
-            'https://c.saavncdn.com/228/Gadar-Ek-Prem-Katha-Hindi-2001-20230811123918-500x500.jpg'),
-    RecentlySongs(
-        url:
-            "https://aac.saavncdn.com/088/64ec11ed2a357085a5c598b91e18723c_96.mp4",
-        title: "Jaan - E - Jigar Jaaneman",
-        subtitle: "Jaan - E - Jigar Jaaneman",
-        image:
-            "https://c.saavncdn.com/088/Aashiqui-Hindi-1989-20221118014024-500x500.jpg"),
-    RecentlySongs(
-      url:
-          "https://aac.saavncdn.com/026/3687b7ddfa714fcd3d7e1a4af95ead4e_96.mp4",
-      title: "Chaleya (From \"Jawan\")",
-      subtitle: "Chaleya (From \"Jawan\")",
-      image:
-          "https://c.saavncdn.com/026/Chaleya-From-Jawan-Hindi-2023-20230814014337-500x500.jpg",
-    ),
-  ];
+  bool _isLoading = false;
+
+  void _startLoading() {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Simulate a 5-second delay
+    Future.delayed(Duration(seconds: 2), () {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
+  Future<void> downloadFile(String url, String filename, int index) async {
+    setState(() {
+      isDownloadingList[index] = true;
+      downloadProgressList[index] = 0.0;
+    });
+
+    try {
+      Dio dio = Dio();
+
+      // Request permission to write to external storage
+      PermissionStatus status = await Permission.manageExternalStorage.request();
+
+      if (status.isGranted) {
+        // Get the directory to store the downloaded file
+        Directory? directory;
+        if (Platform.isAndroid) {
+          directory = await getExternalStorageDirectory();
+          String newPath = "";
+          List<String> folders = directory!.path.split("/");
+          for (int x = 1; x < folders.length; x++) {
+            String folder = folders[x];
+            if (folder != "Android") {
+              newPath += "/" + folder;
+            } else {
+              break;
+            }
+          }
+          newPath = newPath + "/Download";
+          directory = Directory(newPath);
+        } else {
+          directory = await getApplicationDocumentsDirectory();
+        }
+
+        if (!await directory.exists()) {
+          await directory.create(recursive: true);
+        }
+
+        String filePath = '${directory.path}/$filename.mp3';
+
+        // Start the download
+        await dio.download(
+          url,
+          filePath,
+          onReceiveProgress: (received, total) {
+            if (total != -1) {
+              setState(() {
+                downloadProgressList[index] = received / total;
+              });
+            }
+          },
+        );
+
+        setState(() {
+          downloadProgressList[index] = 1.0; // Ensure 100% completion
+          isDownloadingList[index] = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Download completed: $filePath')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Storage permission denied')),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        isDownloadingList[index] = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Download failed: $e')),
+      );
+    }
+  }
+
+
+
   List<SearchData> channelData = [
     SearchData(
       imageUrl:
@@ -213,285 +281,268 @@ class _DashBoardScreenState extends State<SearchScreen> {
     ),
   ];
 
-  List<RecentlySongs> filteredItems = [];
   List<SearchData> filteredItems1 = [];
-
+  List<dynamic> trendingAlbum = [];
   @override
   void initState() {
+    filteredList = List.from(trendingSong);
+    filteredList2 = List.from(moodList);
+    hitMood();
+    _startLoading();
+    hitTrendingSongs();
+    hitTrending();
+    searchApi();
     super.initState();
-    filteredItems = List.from(recently);
-    filteredItems1 = List.from(channelData);
+
   }
 
-  void filterItems(String query) {
-    if (query.isEmpty) {
-      setState(() {
-        filteredItems = List.from(recently);
-        filteredItems1 = List.from(channelData);
-      });
-    } else {
-      setState(() {
-        filteredItems = recently.where((item) {
-          return item.title.toLowerCase().contains(query.toLowerCase());
-        }).toList();
+  Future<void> hitMood() async {
+    final response = await http.get(Uri.parse(mood));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
 
-        filteredItems1 = channelData.where((item) {
-          return item.text.toLowerCase().contains(query.toLowerCase());
-        }).toList();
-      });
+      if (responseData.containsKey('mood')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          moodList = responseData['mood'];
+
+          filteredList2=moodList;
+          // restBanner=responseData['data']['banner_img'];
+          print(moodList);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
+  }
+  Future<void> hitTrendingSongs() async {
+    final response = await http.get(Uri.parse(trendingSongsApi));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('trendingSongs')) {
+        final List<dynamic> songsJson = responseData['trendingSongs'];
+
+        setState(() {
+          // Parse each song from JSON and add it to the list
+
+
+          trendingSong=songsJson;
+          filteredList=trendingSong;
+
+
+          isDownloadingList = List<bool>.filled(filteredList.length, false);
+          downloadProgressList = List<double>.filled(filteredList.length, 0.0);
+
+
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+
+
+
+
     }
   }
 
-  void _clearSearch() {
-    setState(() {
-      _searchController.clear();
-      filteredItems = List.from(recently);
-      filteredItems1 = List.from(channelData);
-    });
+  Future<void> hitTrending() async {
+    final response = await http.get(Uri.parse(trendingAlbums));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('trendingAlbums')) {
+        setState(() {
+          // Assuming 'data' is a list, update apiData accordingly
+          trendingAlbum = responseData['trendingAlbums'];
+          // restBanner=responseData['data']['banner_img'];
+          print(trendingAlbum);
+
+          // await saveDataLocally(responseData['posts']);
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    }
   }
 
 
-  void _openDialog(BuildContext context, int index) {
-    showGeneralDialog(
-      barrierLabel: "Label",
-      barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.5),
-      transitionDuration: Duration(milliseconds: 700),
-      context: context,
-      pageBuilder: (context, anim1, anim2) {
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: Stack(
-            children: [
-              SizedBox(
-                height: 420,
-                child: Center(
-                  child: Stack(
-                    children: [
-                      Column(
-                        children: [
-                          Container(
-                            height: 400.0,
-                            margin: EdgeInsets.only(
-                                bottom: 10, left: 12, right: 12),
-                            child: Column(
-                              children: [
-                                Container(
-                                  height: 310,
-                                  width: double.infinity,
-                                  margin: EdgeInsets.only(
-                                      bottom: 10,
-                                      left: 12,
-                                      right: 12),
-                                  decoration: BoxDecoration(
 
-                                    color: Color(0xFF222B40),
-                                    borderRadius:
-                                    BorderRadius.circular(10),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      // Add your image widget here
-                                      SizedBox(
-                                        width: 200,
-                                        child: Image.network(
-                                          '${recently[index].image}',
-                                          // Set the width as per your requirement
-                                          height: 130,
-                                          width: 200,
+  Future<void> hitUserSongs( String id) async {
+    final SharedPreferences prefs =
+    await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
 
-                                          fit: BoxFit
-                                              .fill, // Set the height as per your requirement
-                                        ),
-                                      ),
-                                      SizedBox(height: 10),
-                                      // Adjust the spacing between image and text
-                                      Text(
-                                        '${recently[index].title}',
-                                        style: GoogleFonts.poppins(
-                                          textStyle: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold),
-                                          decoration: TextDecoration.none,
-                                        ),
-                                      ),
-                                      Text(
-                                        '${recently[index].subtitle}',
-                                        style: GoogleFonts.poppins(
-                                          textStyle: const TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold),
-                                          decoration: TextDecoration.none,
-
-                                        ),
-                                      ),
-
-                                      Padding(
-                                        padding: EdgeInsets.only(top: 18.0),
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            Navigator.of(context).pop();
-                                            musicService.playSong(
-                                                recently[index].url,
-                                                recently[index].image,
-                                                recently[index].title,
-                                                recently[index].subtitle);
-                                          },
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.start,
-                                            children: [
-                                              // Image Icon
-                                              Padding(
-                                                padding: EdgeInsets.all(8.0),
-                                                child: Icon(
-                                                  Icons.play_circle,
-                                                  size: 30,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-
-                                              // Title
-                                              Text(
-                                                'Play Now',
-                                                style: GoogleFonts.poppins(
-                                                  textStyle: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 18,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                  decoration: TextDecoration.none,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-
-                                      const Divider(
-                                        color: Colors.grey,
-                                        // You can customize the color
-                                        thickness: 1.0,
-                                        // You can customize the thickness
-                                        height:
-                                        20.0, // You can customize the height
-                                      ),
-
-                                      Row(
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Icon(
-                                              Icons.music_note_outlined,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          SizedBox(width: 8.0),
-                                          Text(
-                                            'Details',
-                                            style: GoogleFonts.poppins(
-                                              textStyle: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold),
-                                              decoration: TextDecoration.none,
-
-                                            ),
-                                          ),
-                                          Spacer(),
-                                          // Adds flexible space between title and trailing
-                                          IconButton(
-                                            icon: Icon(
-                                              Icons.arrow_forward_ios,size: 25,color: Colors.white,),
-                                            onPressed: () {
-                                              // Add your onPressed logic here
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context).pop();
-
-                                  },
-                                  child: Container(
-                                    height: 50,
-                                    margin: EdgeInsets.only(bottom: 10, left: 12, right: 12),
-                                    decoration: BoxDecoration(
-                                      color: Color(0xFF222B40),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: SizedBox.expand(
-                                      child: Center(
-                                        child: Text(
-                                          'cancel',
-                                          style: GoogleFonts.poppins(
-                                            textStyle: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            decoration: TextDecoration.none,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Positioned(
-              //   top: 00.0,
-              //   left: 110,
-              //   child: Image.network(
-              //     'https://c.saavncdn.com/905/Tujhe-Yaad-Na-Meri-Ayee-2-Hindi-2023-20231107133527-500x500.jpg',
-              //     width: 200.0,
-              //     height: 200.0,
-              //     fit: BoxFit.cover,
-              //   ),
-              // ),
-
-            ],
-          ),
-        );
+    final response = await http.post(
+      Uri.parse(userSongs),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
       },
-      transitionBuilder: (context, anim1, anim2, child) {
-        return SlideTransition(
-          position: Tween(
-              begin: Offset(0, 1), end: Offset(0, 0))
-              .animate(anim1),
-          child: child,
-        );
-      },
+      body: jsonEncode({'song_id': id,}),
     );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load recently songs');
+    }
+
+  }
+
+
+
+  List<SearchSongModel> searchSongs = [];
+  List<AlbumSearch> searchAlbum = [];
+
+  Future<void> searchApi() async {
+    final SharedPreferences prefs =
+    await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+
+    final response = await http.post(
+      Uri.parse(search),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('results')) {
+        final List<dynamic> songsJson = responseData['results']['songs'];
+        final List<dynamic> albumsJson = responseData['results']['albums'];
+        final List<dynamic> playlistsJson = responseData['results']['playlists'];
+        final List<dynamic> singersJson = responseData['results']['singers'];
+
+        setState(() {
+          searchSongs.clear();
+          searchAlbum.clear();
+          for (var songJson in singersJson) {
+            final song = AlbumSearch(
+              name: songJson['name'],
+              status: songJson['status'].toString(),
+              image: songJson['image_data'],
+              imageData: songJson['image_data'],
+              id: songJson['id'].toString(),
+              albumcat: 'artist_id', createdAt: '', updatedAt: '',
+              artistname: '',
+            );
+
+            searchAlbum.add(song);
+          }
+
+          for (var songJson in albumsJson) {
+            final song = AlbumSearch(
+              name: songJson['name'],
+              status: songJson['status'].toString(),
+              image: songJson['image_data'],
+              createdAt: '',
+              updatedAt: '',
+              imageData: songJson['image_data'],
+              id: songJson['id'].toString(),
+              albumcat: 'album_id', artistname: '',
+            );
+
+            searchAlbum.add(song);
+          }
+
+
+          for (var songJson in playlistsJson) {
+            final song = AlbumSearch(
+              name: songJson['playlist_name'],
+              status: songJson['status'].toString(),
+              image: songJson['image_data'].toString(),
+              createdAt: '',
+              updatedAt: '',
+              imageData: songJson['image_data'].toString(),
+              id: songJson['id'].toString(),
+              albumcat: 'playlist_id', artistname: '',
+            );
+
+            searchAlbum.add(song);
+          }
+
+
+
+
+          for (var songJson in songsJson) {
+            final song = SearchSongModel(
+              title: songJson['title'],
+              artist: songJson['singer_name'].toString(),
+              album: songJson['album']['name'],
+              imagealbum: songJson['album']['image_data'],
+              url: songJson['file_data'],
+              song_lyrics: songJson['song_lyrics'].toString(),
+              image: songJson['image_data'],
+              id: songJson['id'].toString(),
+              subtitle: songJson['subtitle'],
+              singer_id: songJson['singer_id'].toString(),
+              year: songJson['year'].toString(),
+              album_id: songJson['album_id'].toString(),
+              mood_id: songJson['mood_id'].toString(),
+              language_id: songJson['language_id'].toString(),
+              genre_id: songJson['genre_id'].toString(),
+              music_director_id: songJson['music_director_id'].toString(),
+              file_data: songJson['file_data'],
+              image_data: songJson['image_data'],
+              status: songJson['status'],
+              release_date: songJson['release_date'],
+              like_flag: songJson['like_flag'],
+            );
+
+            searchSongs.add(song);
+          }
+
+        });
+      } else {
+        throw Exception('Invalid API response: Missing "data" key');
+      }
+    } else {
+      throw Exception('Failed to load songs: ${response.statusCode}');
+    }
+  }
+
+
+
+
+@override
+  void dispose() {
+    super.dispose();
+  }
+
+
+  Future<void> _handleRefresh() async {
+    try {
+      // Fetch new data and update the state
+      await hitTrending();
+      await  hitMood();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Page Refreshed!')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to refresh')),
+      );
+    }
   }
 
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
-      scrollBehavior: const ConstantScrollBehavior(),
-      title: 'Music Player Saavn',
-      home: Scaffold(
-        backgroundColor:  Colors.black,
+    return Scaffold(
+      backgroundColor:  Colors.black,
 
-        // backgroundColor: const Color(0xFF222B40),
-        body: CustomScrollView(
+      // backgroundColor: const Color(0xFF222B40),
+      body:
+
+      RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: CustomScrollView(
           slivers: [
             SliverAppBar(
+              automaticallyImplyLeading: false,
               pinned: true,
               stretch: true,
               expandedHeight: 40,
@@ -503,47 +554,283 @@ class _DashBoardScreenState extends State<SearchScreen> {
               flexibleSpace: FlexibleSpaceBar(
                 title: Padding(
                   padding:
-                      const EdgeInsets.only(top: 25.0, left: 15, right: 15),
-                  child: Card(
-                    color: Colors.white,
-                    elevation: 4, // Controls the shadow depth
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(12.0), // Controls corner radius
-                    ),
-                    child: SizedBox(
-                      height: 40,
-                      child: TextField(
-                        style: TextStyle(color: Colors.black),
-                        controller: _searchController,
-                        onChanged: (value) {
-                          filterItems(value);
-                        },
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          prefixIcon: Icon(
-                            Icons.search,
-                            size: 20,
-                            color: Colors.black,
+                  const EdgeInsets.only(top: 25.0, left: 15, right: 15),
+                  child:
+
+                  GestureDetector(
+                    //
+                    onTap: () => showSearch(
+                      context: context,
+                      delegate: SearchPage(
+                        barTheme: ThemeData.dark().copyWith(
+                          inputDecorationTheme: InputDecorationTheme(
+                            border: InputBorder.none,
+                            focusedBorder: InputBorder.none,
                           ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              Icons.clear,
-                              size: 20,
-                              color: Colors.black,
-                            ),
-                            onPressed: () {
-                              _clearSearch();
-                            },
-                          ),
-                          hintStyle: TextStyle(color: Colors.black),
-                          hintText: 'Search',
                         ),
+                        onQueryUpdate: print,
+                        items: searchAlbum,
+
+                        searchLabel: 'Search item',
+                        suggestion: const Center(
+                          child: Text('Search Item ',style: TextStyle(color: Colors.white),),
+                        ),
+                        failure: const Center(
+                          child: Text('No data found :('
+                            ,style: TextStyle(color: Colors.white),
+
+                          ),
+                        ),
+                        filter: (person) => [
+                          person.name,
+                          person.artistname,
+                        ],
+                        sort: (a, b) => a.compareTo(b),
+                        builder: (person) =>
+                            GestureDetector(
+                          onTap: (){
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  return SongsDeatilsList(
+                                    url: person.id.toString() ?? 'defaultId',
+                                    image: person.imageData.toString() ?? 'defaultImage',
+                                    title: person.name.toString() ?? 'defaultTitle',
+                                    type: person.albumcat.toString(),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                          child: Card(
+                            color: Colors.black,
+                            elevation: 4,
+                            child: GestureDetector(
+                              onTap: (){
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) {
+                                      return SongsDeatilsList(
+                                        url: person.id.toString(),
+                                        image: person.imageData
+                                            .toString(),
+                                        title: person.name
+                                            .toString(),
+                                        type: 'album_id',
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+
+                              child: Row(
+                                children: <Widget>[
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: SizedBox(
+                                      width: 50.0,
+                                      child: ClipRRect(
+                                        borderRadius:
+                                        BorderRadius.circular(10.0),
+                                        child: Image.network(
+                                          person.imageData,
+                                          // playlist[index].image.toString(),
+                                          width: 50.0,
+                                          height: 50.0,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error,
+                                              stackTrace) {
+                                            // Return a default image widget here
+                                            return Container(
+                                              width: 50.0,
+                                              height: 50.0,
+                                              color: Colors.grey,
+                                              // Placeholder color
+                                              // You can customize the default image as needed
+                                              child: Icon(
+                                                Icons.image,
+                                                color: Colors.white,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(10.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Text(person.name
+                                                .toString(),
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: TextSizes
+                                                    .textsmallPlayer),
+                                          ),
+                                          SizedBox(height: 5.sp),
+                                          // Row(
+                                          //   children: [
+                                          //     Text(
+                                          //       searchSongs[index].album
+                                          //           .toString(),
+                                          //       style: TextStyle(
+                                          //           color: Colors.grey,
+                                          //           fontSize: TextSizes
+                                          //               .textsmall),
+                                          //       maxLines: 1,
+                                          //       overflow:
+                                          //       TextOverflow.ellipsis,
+                                          //     ),
+                                          //     Text(
+                                          //       ' / ',
+                                          //       style: TextStyle(
+                                          //           color: Colors.grey,
+                                          //           fontSize: TextSizes
+                                          //               .textsmall),
+                                          //       maxLines: 1,
+                                          //       overflow:
+                                          //       TextOverflow.ellipsis,
+                                          //     ),
+                                          //     Text('',
+                                          //
+                                          //       style: TextStyle(
+                                          //           color: Colors.grey,
+                                          //           fontSize: 8.sp),
+                                          //       maxLines: 1,
+                                          //       overflow:
+                                          //       TextOverflow.ellipsis,
+                                          //     ),
+                                          //   ],
+                                          // ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            right: 0.0),
+                                        child: PopupMenuButton<int>(
+                                          iconColor: Colors.white,
+
+                                          itemBuilder: (context) => [
+
+
+                                            PopupMenuItem(
+                                              value: 1,
+                                              // row with two children
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.info,
+                                                    color: Colors.white,
+                                                    size: 18.sp,
+                                                  ),
+                                                  SizedBox(
+                                                    width: 5,
+                                                  ),
+                                                  Text(
+                                                    "Song Info",
+                                                    style: GoogleFonts
+                                                        .poppins(
+                                                      textStyle: TextStyle(
+                                                          color: Colors
+                                                              .white,
+                                                          fontSize: TextSizes
+                                                              .textsmallPlayer,
+                                                          fontWeight:
+                                                          FontWeight
+                                                              .normal,
+                                                          overflow:
+                                                          TextOverflow
+                                                              .ellipsis),
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                            ),
+
+
+                                          ],
+                                          offset: Offset(0, 100),
+                                          color: Colors.black,
+                                          elevation: 2,
+                                          // on selected we show the dialog box
+                                          onSelected: (value) async {
+                                            // if value 1 show dialog
+                                            if (value == 1) {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) {
+                                                    return SongInfoScreen(
+                                                      songId: person.id,
+                                                    );
+                                                  },
+                                                ),
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      ),
+
+                                      // Add more Padding widgets for additional icons if needed
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
                       ),
                     ),
 
-                    // Margin around the card
-                  ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12.0), // Controls corner radius
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5), // Shadow color
+                            spreadRadius: 2, // Shadow spread radius
+                            blurRadius: 4, // Shadow blur radius
+                            offset: Offset(0, 4), // Shadow offset
+                          ),
+                        ],
+                      ),
+                      child: SizedBox(
+                        height: 40,
+                        child: Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Icon(Icons.search,color: Colors.black,size: 20.sp,),
+                            ),
+                            Text('Search',
+                              style: GoogleFonts.poppins(
+                                textStyle:  TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.normal),
+                              ),
+
+                            )
+                          ],
+                        )
+                      ),
+                    ),
+                  )
+
                 ),
                 titlePadding: EdgeInsets.only(top: 1),
                 centerTitle: true,
@@ -566,30 +853,30 @@ class _DashBoardScreenState extends State<SearchScreen> {
                       child: ListTile(
                         title: SizedBox(
                             child: Text.rich(
-                          TextSpan(
-                            children: [
                               TextSpan(
-                                text: 'its pretty quiet in here.',
-                                style: GoogleFonts.poppins(
-                                  textStyle: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.normal),
-                                ),
+                                children: [
+                                  TextSpan(
+                                    text: 'its pretty quiet in here.',
+                                    style: GoogleFonts.poppins(
+                                      textStyle: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.normal),
+                                    ),
+                                  ),
+                                  TextSpan(text: '\n'), // Add a line break
+                                  TextSpan(
+                                    text: 'You havent searched for anything yet.',
+                                    style: GoogleFonts.poppins(
+                                      textStyle: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 8,
+                                          fontWeight: FontWeight.normal),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              TextSpan(text: '\n'), // Add a line break
-                              TextSpan(
-                                text: 'You havent searched for anything yet.',
-                                style: GoogleFonts.poppins(
-                                  textStyle: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 8,
-                                      fontWeight: FontWeight.normal),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )),
+                            )),
                         trailing: Container(
                           width: 100,
                           // Set the desired width and height for your round card
@@ -625,172 +912,263 @@ class _DashBoardScreenState extends State<SearchScreen> {
                     ),
                   ),
 
-                  SizedBox(
-                    height: 50,
-                    child: Column(children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 0.0),
-                        child: SizedBox(
-                          height: 50,
-                          child: ListView.builder(
-                              itemCount: 1,
-                              scrollDirection: Axis.horizontal,
-                              itemBuilder: (context, index) {
-                                return Row(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10.0),
-                                        child: Text(
-                                          'Trending',
-                                          style: GoogleFonts.poppins(
-                                            textStyle: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 18,
-                                                fontWeight:
-                                                FontWeight.bold),
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 240.0),
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) {
-                                                  return TrendingNowViewAll();
-                                                },
-                                              ),
-                                            );
-                                          },
-                                          child: Text(
-                                            'See All',
-                                            style: GoogleFonts.poppins(
-                                              textStyle:
-                                              const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 18,
-                                                fontWeight:
-                                                FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ]);
-                              }),
-                        ),
-                      ),
-                    ]),
-                  ),
+
+
 
                 ],
               ),
             ),
+
             SliverPadding(
-              padding: EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(5.sp),
               sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final cartItem = filteredItems[index];
-                  return GestureDetector(
+                        (context, index) {
+                      return Column(
+                        children: [
+                          Row(
+                            children: <Widget>[
+
+                              Expanded(
+                                child:
+                                Padding(
+                                  padding:
+                                  EdgeInsets.all(5.sp),
+                                  child:
+                                  Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Text(
+                                        'Trending',
+                                        style: TextStyle(color: Colors.white, fontSize: TextSizes.textlarge),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding:  EdgeInsets
+                                    .only(
+                                    right:
+                                    10.sp),
+                                child:
+                                Row(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return RecentlySongsClass(
+                                                name: 'TrendingAlbum',
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        'View All',
+                                        style: GoogleFonts.poppins(
+                                          textStyle: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: TextSizes.textlarge,
+                                            fontWeight: FontWeight.normal,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+
+
+                        ],
+                      );
+
+
+
+
+                    },
+                    childCount: 1,
+                  )),
+            ),
+
+            SliverPadding(
+              padding: EdgeInsets.all(8.0),
+              sliver: trendingAlbum.isEmpty
+                  ? SliverToBoxAdapter(
+                child: Container(
+                  height: 300,
+                  child: Center(
+                    child: Text(
+                      'No playlists found',
+                      style: TextStyle(fontSize: 20),
+                    ),
+                  ),
+                ),
+              )
+                  : SliverList(
+                delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                    // Debugging: Print out the length of playlists and the current index
+                    print('Playlists length: ${trendingAlbum.length}, Current index: $index');
+
+                    if (index >= trendingAlbum.length) {
+                      // Index out of range, return an empty container or handle it accordingly
+                      return Container();
+                    }
+
+                    final cartItem = trendingAlbum[index];
+
+                    return GestureDetector(
                       onTap: () {
-                        musicService.playSong(cartItem.url, cartItem.image,
-                            cartItem.title, cartItem.subtitle);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return SongsDeatilsList(
+                                url:
+                                cartItem['id'].toString(),
+                                image: cartItem['image_data']
+                                    .toString(),
+                                title: cartItem['name']
+                                    .toString(),
+                                type: 'album_id',
+                              );
+                            },
+                          ),
+                        );
+
                       },
                       child: Card(
-                        color: Colors.black,
+                        color: Colors
+                            .black,
                         elevation: 4,
                         child: Row(
                           children: <Widget>[
                             Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: SizedBox(
-                                width: 70.0,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                      10.0), // Adjust the radius as needed
-                                  child: Image.network(
-                                    cartItem.image,
-                                    width: 200.0,
-                                    // Adjust the width as needed
+                              padding: const EdgeInsets
+                                  .all(
+                                  5.0),
+                              child:
+                              SizedBox(
+                                width:
+                                50.0,
+                                child:
+                                ClipRRect(
+                                  borderRadius:
+                                  BorderRadius.circular(10.0),
+                                  child: CachedNetworkImage(
+                                    width: 50.0,
                                     height: 50.0,
-                                    // Adjust the height as needed
-                                    fit: BoxFit.cover,
+                                    imageUrl:  trendingAlbum[index]['image_data'].toString(),
+                                    fit: BoxFit.cover, // Adjust this according to your requirement
+                                    placeholder: (context, url) => Center(
+                                      child: CircularProgressIndicator(
+                                        color: Colors.orangeAccent,
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) => Image.asset(
+                                      'assets/r_m_image.png', // Path to your default image asset
+                                      width: 50.0,
+                                      height: 50.0, // Adjust width as per your requirement
+                                      fit: BoxFit.cover, // Adjust this according to your requirement
+                                    ),
                                   ),
+
                                 ),
                               ),
                             ),
                             Expanded(
-                              child: Padding(
-                                padding: EdgeInsets.all(20.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              child:
+                              Padding(
+                                padding:
+                                EdgeInsets.all(10.0),
+                                child:
+                                Column(
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                                   children: <Widget>[
-                                    Text(cartItem.title.toString()),
-                                    SizedBox(height: 10.0),
-                                    Text(cartItem.subtitle),
+                                    Text(
+                                      trendingAlbum[index]['name'].toString(),
+                                      style: TextStyle(color: Colors.white, fontSize: TextSizes.textmedium),
+                                    ),
+                                    SizedBox(height: 5.sp),
+                                    // Text(trendingAlbum[index]['subtitle'].toString(),
+                                    //   style: TextStyle(color: Colors.grey, fontSize: TextSizes.textsmall),
+                                    // ),
                                   ],
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 8.0),
-                                    child: IconButton(
-                                      icon: Icon(
-                                        recently[index].isLiked
-                                            ? Icons.favorite
-                                            : Icons.favorite_border,
-                                        color: recently[index].isLiked
-                                            ? Colors.red
-                                            : null,
-                                      ),
-                                      onPressed: () {
-                                        // Toggle the like status when the icon is pressed
-                                        recently[index].isLiked =
-                                            !recently[index].isLiked;
-                                        // Update the UI
-                                        setState(() {});
-                                      },
-                                    ),
-                                  ),
-                                  IconButton(
+                            Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
+                              children: [
+
+                                SizedBox(
+                                  width: 40.sp,
+                                  child: IconButton(
                                     icon: Icon(
-                                      Icons.more_vert,
-                                      size: 25,
+                                      Icons.arrow_forward_ios_outlined,
                                       color: Colors.white,
+                                      size: 20.sp,
                                     ),
                                     onPressed: () {
-                                   _openDialog(context, index);
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) {
+                                            return SongsDeatilsList(
+                                              url:
+                                              cartItem['id'].toString(),
+                                              image: cartItem['image_data']
+                                                  .toString(),
+                                              title: cartItem['name']
+                                                  .toString(),
+                                              type: 'album_id',
+                                            );
+                                          },
+                                        ),
+                                      );
                                     },
                                   ),
-                                ],
-                              ),
+                                ),
+
+
+
+
+
+                                // Add more Padding widgets for additional icons if needed
+                              ],
                             ),
+
+
                           ],
                         ),
-                      ));
-                },
-                childCount: filteredItems.length,
-              )),
+                      ),
+                    );
+
+
+                  },
+                  childCount: min(trendingAlbum.length, 3),
+                ),
+              ),
             ),
+
+
+
             const SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.only(top: 18.0, left: 15.0, right: 15),
+                padding: EdgeInsets.only(top: 18.0, left: 15.0, right: 15,),
                 child: Row(
                   children: [
                     SizedBox(
                         height: 20,
-                        width: 340,
                         child: Text(
                           'Channel',
                           style: TextStyle(
@@ -810,20 +1188,18 @@ class _DashBoardScreenState extends State<SearchScreen> {
               ),
             ),
             SliverPadding(
-              padding: EdgeInsets.all(8.0),
+              padding: EdgeInsets.only(bottom: 50.0),
               sliver: SliverGrid(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     crossAxisSpacing: 8.0,
                     mainAxisSpacing: 8.0,
-                    childAspectRatio: 1.7),
+                    childAspectRatio: 1.7
+                ),
                 delegate: SliverChildBuilderDelegate(
-                  (BuildContext context, int index) {
+                      (BuildContext context, int index) {
                     // Define your ratios here as needed
-                    List<double> ratios = [1.0, 0.5, 1.5, 0.8];
-
-                    final cartItem = filteredItems1[index];
-                                                            // Example ratios
+                    List<double> ratios = [1.0, 0.5, 1.5, 0.8]; // Example ratios
                     return GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -831,13 +1207,20 @@ class _DashBoardScreenState extends State<SearchScreen> {
                             MaterialPageRoute(
                               builder: (context) {
                                 return SongsDeatilsList(
-                                  url: cartItem.imageUrl,
-                                  image: cartItem.imageUrl,
-                                  title: cartItem.text,
+                                  url: filteredList2[index]['id'].toString(),
+                                  image: filteredList2[index]['image_data'],
+                                  title: filteredList2[index]['name'],
+                                  type: 'mood_id',
                                 );
                               },
                             ),
                           );
+
+
+
+
+
+
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(3.0),
@@ -848,37 +1231,40 @@ class _DashBoardScreenState extends State<SearchScreen> {
                                   width: 300,
                                   height: 150,
                                   decoration: BoxDecoration(
-                                    color: cartItem.backgroundColor,
+                                    color: channelData[index].backgroundColor,
                                     borderRadius: BorderRadius.circular(5.0),
                                   ),
+
                                   child: Align(
                                     alignment: Alignment.topCenter,
                                     child: Padding(
                                       padding: const EdgeInsets.only(top: 10.0),
-                                      child: Text(
-                                        cartItem.text,
+                                      child: Text( filteredList2[index]['name'],
+                                        // channelData[index].text,
                                         style: TextStyle(
                                           color: Colors.white,
                                           // Text color
-                                          fontSize: 17.0,
+                                          fontSize: TextSizes.textmedium,
                                           // Font size
                                           fontWeight: FontWeight.bold,
                                           // Font weight
                                           fontStyle: FontStyle.normal,
                                           // Font style
-                                          fontFamily:
-                                              'Roboto', // Custom font family
-                                        ),
-                                      ),
+                                          fontFamily: 'Roboto', // Custom font family
+                                        ),),
                                     ),
-                                  )),
+                                  )
+
+
+                              ),
                               // Overlapping Card
                               Positioned(
                                   top: 40,
                                   left: 25,
                                   right: 25,
+
                                   child: Transform.rotate(
-                                    angle: -8 * (3.141592653589793 / 180),
+                                    angle:-8 * (3.141592653589793 / 180),
                                     child: Card(
                                       elevation: 5,
                                       shape: RoundedRectangleBorder(
@@ -894,24 +1280,50 @@ class _DashBoardScreenState extends State<SearchScreen> {
                                             ),
                                             // borderRadius: BorderRadius.circular(10.0),
                                           ),
+
                                           child: ClipRRect(
                                             borderRadius: BorderRadius.only(
                                               topLeft: Radius.circular(10.0),
                                               topRight: Radius.circular(10.0),
                                             ),
-                                            child: Image.network(
-                                              cartItem.imageUrl,
-                                              fit: BoxFit.cover,
+
+
+                                            child: CachedNetworkImage(
+                                              imageUrl:
+                                              filteredList2[index]['image_data'].toString(),
+                                              fit: BoxFit.fill,
+                                              // Adjust this according to your requirement
+                                              placeholder: (context, url) =>
+                                                  Center(
+                                                    child:
+                                                    CircularProgressIndicator(
+                                                      color: Colors.orangeAccent,
+                                                    ),
+                                                  ),
+                                              errorWidget:
+                                                  (context, url, error) =>
+                                                  Image.asset(
+                                                    'assets/no_image.jpg',
+                                                    // Path to your default image asset
+                                                    // Adjust width as per your requirement
+                                                    fit: BoxFit
+                                                        .cover, // Adjust this according to your requirement
+                                                  ),
                                             ),
-                                          )),
-                                    ),
-                                  )),
+
+                                          )
+                                      ),
+
+                                    ),)
+                              ),
                             ],
+
                           ),
-                        ));
+                        )
+                    );
+
                   },
-                  childCount: filteredItems1
-                      .length, // Replace this with your desired number of children
+                  childCount: filteredList2.length, // Replace this with your desired number of children
                 ),
               ),
             ),

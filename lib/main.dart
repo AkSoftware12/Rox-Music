@@ -1,85 +1,116 @@
+import 'dart:ui';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:http/io_client.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:music_player_saavn/Home/home.dart';
-
+import 'package:music_player_saavn/Route/homebottom.dart';
+import 'package:music_player_saavn/Service/MusicService.dart';
+import 'package:music_player_saavn/Widget/likeUnlike.dart';
+import 'package:provider/provider.dart';
+import 'dart:io';
 import 'Auth/auth_service.dart';
-import 'Demo/demo.dart';
+import 'BackgroudPlay/backgrpoud.dart';
 import 'Login/login.dart';
+import 'MiniPlayer Demo/utils.dart';
 import 'OfflineSongs/data/services/hive_box.dart';
+import 'package:http/http.dart' as http;
+
 import 'Service/audio_handler.dart';
-late AudioHandler _audioHandler;
+import 'Widget/playPause.dart';
 
-Future<void> main() async {
 
-  // _audioHandler = await AudioService.init(
-  //   builder: () => AudioPlayerHandler(),
-  //   config: const AudioServiceConfig(
-  //     androidNotificationChannelId: 'com.ryanheise.myapp.channel.audio',
-  //     androidNotificationChannelName: 'Audio playback',
-  //     androidNotificationOngoing: true,
-  //   ),
-  // );
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-
-  // initialize hive
-  await Hive.initFlutter();
-  await Hive.openBox(HiveBox.boxName);
-  //
-  // // initialize audio service
-  //
-  // await JustAudioBackground.init(
-  //   androidNotificationChannelId: 'com.shokhrukhbek.meloplay.channel.audio',
-  //   androidNotificationChannelName: 'Meloplay Audio',
-  //   androidNotificationOngoing: true,
-  //   androidStopForegroundOnPause: true,
-  // );
-  //
-
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key,});
-
-  // This widget is the root of your application.
+class MyHttpOverrides extends HttpOverrides {
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home:  AuthenticationWrapper(),
-      // home:   PhoneAuthScreen(),
-    );
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
   }
 }
-class AuthenticationWrapper extends StatelessWidget {
-  @override
 
+late AudioHandler myAudioHandler;
+Future<void> main() async {
+  HttpOverrides.global = MyHttpOverrides();
+  WidgetsFlutterBinding.ensureInitialized();
+
+
+
+  if (Platform.isAndroid) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'AIzaSyCtv6MbZ-NW9gX1N-5_MCeh45w1gdBhqHI',
+        appId: '1:912153009740:android:e05546e5714ae782fadee9',
+        messagingSenderId: '912153009740',
+        projectId: 'ring-music-player',
+        storageBucket: "ring-music-player.appspot.com",
+      ),
+    );
+  } else {
+    await Firebase.initializeApp();
+  }
+
+
+  runApp(MyApp());
+
+}
+
+
+
+class MyApp extends StatelessWidget {
+
+  const MyApp({super.key, });
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: AuthService().isUserLoggedIn(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          // Show a loading indicator while the Future is still running
-          return CircularProgressIndicator();
-        } else if (snapshot.hasError) {
-          // Handle error case
-          return Text('Error: ${snapshot.error}');
-        } else {
-          // Use the result of the Future to determine UI
-          bool isLoggedIn = snapshot.data ?? false;
-          return isLoggedIn ? MyHomePage() : LoginScreen();
-        }
+    return ScreenUtilInit(
+      designSize: const Size(360, 690),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (_, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: '',
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+            textTheme: Typography.englishLike2018.apply(fontSizeFactor: 1.sp),
+          ),
+          home: AuthenticationWrapper(),
+          // routes: {
+          //   '/login': (context) => LoginScreen(),
+          //   '/home': (context) => HomeBottom(),
+          // },
+        );
       },
     );
   }
 }
+
+
+
+class AuthenticationWrapper extends StatelessWidget {
+
+  const AuthenticationWrapper({super.key, });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: AuthService().isUserLoggedIn(),
+      builder: (context, snapshot) {
+        bool isLoggedIn = snapshot.data ?? false;
+        return isLoggedIn ? HomeBottom() : LoginScreen();
+      },
+    );
+  }
+}
+
+
+
+
+

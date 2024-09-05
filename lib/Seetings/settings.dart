@@ -1,9 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:music_player_saavn/NotificationScreen/notification.dart';
+import 'package:music_player_saavn/Utils/textSize.dart';
 import 'package:share/share.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../Profile/profile.dart';
+import '../AccountBalance/wallet.dart';
 import '../CommonCalling/Common.dart';
 import 'dart:io';
 import '../constants/color_constants.dart';
@@ -28,8 +32,6 @@ class _DashBoardScreenState extends State<SettingScreen> {
   bool isLoading = false;
   File? avatarImageFile;
 
-
-
   @override
   void initState() {
     super.initState();
@@ -44,17 +46,12 @@ class _DashBoardScreenState extends State<SettingScreen> {
       photoUrl = prefs.getString(FirestoreConstants.photoUrl) ?? "";
       userEmail = prefs.getString(FirestoreConstants.userEmail) ?? "";
     });
-
-
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor:  Colors.black,
+        backgroundColor: Colors.black,
         // backgroundColor: Color(0xEE2B2E2F),
 
         body: ListView(
@@ -62,32 +59,35 @@ class _DashBoardScreenState extends State<SettingScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 0.0),
               child: Container(
-                height: 60,
+                height: 50.sp,
                 // Card elevation
                 child: Center(
                   child: ListTile(
                     title: Text(
                       'Settings',
                       style: GoogleFonts.poppins(
-                        textStyle: const TextStyle(
+                        textStyle: TextStyle(
                             color: Colors.white,
-                            fontSize: 22,
+                            fontSize: 20.sp,
                             fontWeight: FontWeight.normal),
                       ),
                     ),
                     leading: IconButton(
-                      icon: Icon(Icons.arrow_circle_left_outlined,color: Colors.white,size: 40,),
+                      icon: Icon(
+                        Icons.arrow_circle_left_outlined,
+                        color: Colors.white,
+                        size: 35.sp,
+                      ),
                       onPressed: () {
                         Navigator.pop(context);
                       },
-                    ),  ),
+                    ),
+                  ),
                 ), // Margin around the card
               ),
             ),
-
- //  6230115742
             Padding(
-              padding: const EdgeInsets.only(top: 0.0, bottom: 30),
+              padding: const EdgeInsets.only(top: 0.0, bottom: 15),
               child: Container(
                 // Card elevation
 
@@ -102,9 +102,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                           // Controls the shadow depth
                           // Card elevation
                           child: ListTile(
-                            title:
-                            Text(
-
+                            title: Text(
                               nickname,
                               style: GoogleFonts.poppins(
                                 textStyle: const TextStyle(
@@ -125,58 +123,65 @@ class _DashBoardScreenState extends State<SettingScreen> {
                             leading: Container(
                               child: avatarImageFile == null
                                   ? photoUrl.isNotEmpty
-                                  ? ClipRRect(
-                                borderRadius: BorderRadius.circular(30),
-                                child: Image.network(
-                                  photoUrl,
-                                  fit: BoxFit.cover,
-                                  width: 50,
-                                  height: 50,
-                                  errorBuilder: (context, object, stackTrace) {
-                                    return Icon(
-                                      Icons.account_circle,
-                                      size: 90,
-                                      color: ColorConstants.greyColor,
-                                    );
-                                  },
-                                  loadingBuilder: (BuildContext context,
-                                      Widget child,
-                                      ImageChunkEvent? loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return Container(
-                                      width: 50,
-                                      height: 50,
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          color: ColorConstants.themeColor,
-                                          value: loadingProgress
-                                              .expectedTotalBytes !=
-                                              null
-                                              ? loadingProgress
-                                              .cumulativeBytesLoaded /
-                                              loadingProgress
-                                                  .expectedTotalBytes!
-                                              : null,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              )
-                                  : Icon(
-                                Icons.account_circle,
-                                size: 90,
-                                color: ColorConstants.greyColor,
-                              )
+                                      ? ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(30),
+                                          child: Image.network(
+                                            photoUrl,
+                                            fit: BoxFit.cover,
+                                            width: 50,
+                                            height: 50,
+                                            errorBuilder:
+                                                (context, object, stackTrace) {
+                                              return Icon(
+                                                Icons.account_circle,
+                                                size: 90,
+                                                color: ColorConstants.greyColor,
+                                              );
+                                            },
+                                            loadingBuilder:
+                                                (BuildContext context,
+                                                    Widget child,
+                                                    ImageChunkEvent?
+                                                        loadingProgress) {
+                                              if (loadingProgress == null)
+                                                return child;
+                                              return Container(
+                                                width: 50,
+                                                height: 50,
+                                                child: Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    color: ColorConstants
+                                                        .themeColor,
+                                                    value: loadingProgress
+                                                                .expectedTotalBytes !=
+                                                            null
+                                                        ? loadingProgress
+                                                                .cumulativeBytesLoaded /
+                                                            loadingProgress
+                                                                .expectedTotalBytes!
+                                                        : null,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        )
+                                      : Icon(
+                                          Icons.account_circle,
+                                          size: 90,
+                                          color: ColorConstants.greyColor,
+                                        )
                                   : ClipRRect(
-                                borderRadius: BorderRadius.circular(30),
-                                child: Image.file(
-                                  avatarImageFile!,
-                                  width: 50,
-                                  height: 50,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
+                                      borderRadius: BorderRadius.circular(30),
+                                      child: Image.file(
+                                        avatarImageFile!,
+                                        width: 50,
+                                        height: 50,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
                             ),
                             trailing: Icon(
                               Icons.edit,
@@ -197,32 +202,92 @@ class _DashBoardScreenState extends State<SettingScreen> {
                       ),
                     ],
                   ),
-
                 ),
                 // Margin around the card
               ),
             ),
-            Divider(height: 1,thickness: 2,color: Colors.white10,),
-
-
+            Padding(
+              padding: EdgeInsets.only(top: 0.0, left: 75),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return AccountBalance();
+                      },
+                    ),
+                  );
+                },
+                child: Container(
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 5,
+                          ),
+                          Column(
+                            children: [
+                              Text(
+                                "Earning Balance\n${'₹ 100.00'}",
+                                style: GoogleFonts.poppins(
+                                  textStyle: const TextStyle(
+                                      color: Colors.orange,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.normal),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Spacer(),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 18.0),
+                            child: Card(
+                              elevation: 5,
+                              color: Colors.orange,
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Withdraw',
+                                  style: GoogleFonts.poppins(
+                                    textStyle: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.normal),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Divider(
+              height: 1,
+              thickness: 2,
+              color: Colors.white10,
+            ),
             SizedBox(
-              height: 60,
+              height: 65.sp,
               child: Column(children: [
-
-
                 Padding(
                   padding: const EdgeInsets.only(top: 0.0),
                   child: Container(
-                    height: 58,
+                    height: 60.sp,
                     color: Colors.black, // Controls the shadow depth
                     // Card elevation
                     child: ListTile(
-                      title:Text(
-                        'Mobile Notification',
+                      title: Text(
+                        'Notification',
                         style: GoogleFonts.poppins(
-                          textStyle: const TextStyle(
+                          textStyle: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: TextSizes.textlarge,
                               fontWeight: FontWeight.normal),
                         ),
                       ),
@@ -230,12 +295,13 @@ class _DashBoardScreenState extends State<SettingScreen> {
                       //   Icons.logout,
                       //   color: Colors.white,
                       // ),
+
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.arrow_forward_ios_outlined,
-                            size: 23,
+                            size: 20.sp,
                             color: Colors.white,
                           ),
                         ],
@@ -246,157 +312,49 @@ class _DashBoardScreenState extends State<SettingScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.mobile_friendly,
-                              size: 23,
+                              Icons.notifications,
+                              size: 20.sp,
                               color: Colors.white,
                             ),
                           ],
                         ),
                       ),
                       onTap: () {
-                        // _handleSignOut();
-                      },
-                    ), // Margin around the card
-                  ),
-                ),
-                Divider(height: 1,thickness: 2,color: Colors.white10,),
-
-              ]),
-            ),
-            SizedBox(
-              height: 60,
-              child: Column(children: [
-
-
-                Padding(
-                  padding: const EdgeInsets.only(top: 0.0),
-                  child: Container(
-                    height: 58,
-                    color: Colors.black, // Controls the shadow depth
-                    // Card elevation
-                    child: ListTile(
-                      title:Text(
-                        'Email Notification',
-                        style: GoogleFonts.poppins(
-                          textStyle: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.normal),
-                        ),
-                      ),
-                      // leading: Icon(
-                      //   Icons.logout,
-                      //   color: Colors.white,
-                      // ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.arrow_forward_ios_outlined,
-                            size: 23,
-                            color: Colors.white,
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return NotificationScreen();
+                            },
                           ),
-                        ],
-                      ),
-                      leading: Padding(
-                        padding: const EdgeInsets.only(left: 5.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.email,
-                              size: 23,
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
-                      ),
-                      onTap: () {
-                        // _handleSignOut();
+                        );
                       },
                     ), // Margin around the card
                   ),
                 ),
-                Divider(height: 1,thickness: 2,color: Colors.white10,),
-
-              ]),
-            ),
-            SizedBox(
-              height: 60,
-              child: Column(children: [
-
-
-                Padding(
-                  padding: const EdgeInsets.only(top: 0.0),
-                  child: Container(
-                    height: 58,
-                    color: Colors.black, // Controls the shadow depth
-                    // Card elevation
-                    child: ListTile(
-                      title:Text(
-                        'Theme',
-                        style: GoogleFonts.poppins(
-                          textStyle: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.normal),
-                        ),
-                      ),
-                      // leading: Icon(
-                      //   Icons.logout,
-                      //   color: Colors.white,
-                      // ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.arrow_forward_ios_outlined,
-                            size: 23,
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
-                      leading: Padding(
-                        padding: const EdgeInsets.only(left: 5.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.color_lens,
-                              size: 23,
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
-                      ),
-                      onTap: () {
-                        // _handleSignOut();
-                      },
-                    ), // Margin around the card
-                  ),
+                Divider(
+                  height: 1,
+                  thickness: 2,
+                  color: Colors.white10,
                 ),
-                Divider(height: 1,thickness: 2,color: Colors.white10,),
-
               ]),
             ),
             SizedBox(
-              height: 60,
+              height: 65.sp,
               child: Column(children: [
-
-
                 Padding(
                   padding: const EdgeInsets.only(top: 0.0),
                   child: Container(
-                    height: 58,
+                    height: 60.sp,
                     color: Colors.black, // Controls the shadow depth
                     // Card elevation
                     child: ListTile(
-                      title:Text(
+                      title: Text(
                         'Share',
                         style: GoogleFonts.poppins(
-                          textStyle: const TextStyle(
+                          textStyle: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: TextSizes.textlarge,
                               fontWeight: FontWeight.normal),
                         ),
                       ),
@@ -409,7 +367,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                         children: [
                           Icon(
                             Icons.arrow_forward_ios_outlined,
-                            size: 23,
+                            size: 20.sp,
                             color: Colors.white,
                           ),
                         ],
@@ -421,7 +379,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                           children: [
                             Icon(
                               Icons.share,
-                              size: 23,
+                              size: 20.sp,
                               color: Colors.white,
                             ),
                           ],
@@ -433,28 +391,29 @@ class _DashBoardScreenState extends State<SettingScreen> {
                     ), // Margin around the card
                   ),
                 ),
-                Divider(height: 1,thickness: 2,color: Colors.white10,),
-
+                Divider(
+                  height: 1,
+                  thickness: 2,
+                  color: Colors.white10,
+                ),
               ]),
             ),
             SizedBox(
-              height: 60,
+              height: 65.sp,
               child: Column(children: [
-
-
                 Padding(
                   padding: const EdgeInsets.only(top: 0.0),
                   child: Container(
-                    height: 58,
+                    height: 60.sp,
                     color: Colors.black, // Controls the shadow depth
                     // Card elevation
                     child: ListTile(
-                      title:Text(
+                      title: Text(
                         'Downloads',
                         style: GoogleFonts.poppins(
-                          textStyle: const TextStyle(
+                          textStyle: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: TextSizes.textlarge,
                               fontWeight: FontWeight.normal),
                         ),
                       ),
@@ -467,7 +426,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                         children: [
                           Icon(
                             Icons.arrow_forward_ios_outlined,
-                            size: 23,
+                            size: 20.sp,
                             color: Colors.white,
                           ),
                         ],
@@ -479,7 +438,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                           children: [
                             Icon(
                               Icons.download_for_offline,
-                              size: 23,
+                              size: 20.sp,
                               color: Colors.white,
                             ),
                           ],
@@ -491,28 +450,29 @@ class _DashBoardScreenState extends State<SettingScreen> {
                     ), // Margin around the card
                   ),
                 ),
-                Divider(height: 1,thickness: 2,color: Colors.white10,),
-
+                Divider(
+                  height: 1,
+                  thickness: 2,
+                  color: Colors.white10,
+                ),
               ]),
             ),
             SizedBox(
-              height: 60,
+              height: 65.sp,
               child: Column(children: [
-
-
                 Padding(
                   padding: const EdgeInsets.only(top: 0.0),
                   child: Container(
-                    height: 58,
+                    height: 60.sp,
                     color: Colors.black, // Controls the shadow depth
                     // Card elevation
                     child: ListTile(
-                      title:Text(
+                      title: Text(
                         'Contact Us',
                         style: GoogleFonts.poppins(
-                          textStyle: const TextStyle(
+                          textStyle: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: TextSizes.textlarge,
                               fontWeight: FontWeight.normal),
                         ),
                       ),
@@ -525,7 +485,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                         children: [
                           Icon(
                             Icons.arrow_forward_ios_outlined,
-                            size: 23,
+                            size: 20.sp,
                             color: Colors.white,
                           ),
                         ],
@@ -537,7 +497,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                           children: [
                             Icon(
                               Icons.connect_without_contact,
-                              size: 23,
+                              size: 20.sp,
                               color: Colors.white,
                             ),
                           ],
@@ -549,28 +509,29 @@ class _DashBoardScreenState extends State<SettingScreen> {
                     ), // Margin around the card
                   ),
                 ),
-                Divider(height: 1,thickness: 2,color: Colors.white10,),
-
+                Divider(
+                  height: 1,
+                  thickness: 2,
+                  color: Colors.white10,
+                ),
               ]),
             ),
             SizedBox(
-              height: 60,
+              height: 65.sp,
               child: Column(children: [
-
-
                 Padding(
                   padding: const EdgeInsets.only(top: 0.0),
                   child: Container(
-                    height: 58,
+                    height: 60.sp,
                     color: Colors.black, // Controls the shadow depth
                     // Card elevation
                     child: ListTile(
-                      title:Text(
+                      title: Text(
                         'Help & FAQ',
                         style: GoogleFonts.poppins(
-                          textStyle: const TextStyle(
+                          textStyle: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: TextSizes.textlarge,
                               fontWeight: FontWeight.normal),
                         ),
                       ),
@@ -583,7 +544,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                         children: [
                           Icon(
                             Icons.arrow_forward_ios_outlined,
-                            size: 23,
+                            size: 20.sp,
                             color: Colors.white,
                           ),
                         ],
@@ -595,7 +556,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                           children: [
                             Icon(
                               Icons.help,
-                              size: 23,
+                              size: 20.sp,
                               color: Colors.white,
                             ),
                           ],
@@ -607,28 +568,29 @@ class _DashBoardScreenState extends State<SettingScreen> {
                     ), // Margin around the card
                   ),
                 ),
-                Divider(height: 1,thickness: 2,color: Colors.white10,),
-
+                Divider(
+                  height: 1,
+                  thickness: 2,
+                  color: Colors.white10,
+                ),
               ]),
             ),
             SizedBox(
-              height: 60,
+              height: 65.sp,
               child: Column(children: [
-
-
                 Padding(
                   padding: const EdgeInsets.only(top: 0.0),
                   child: Container(
-                    height: 58,
+                    height: 60.sp,
                     color: Colors.black, // Controls the shadow depth
                     // Card elevation
                     child: ListTile(
-                      title:Text(
+                      title: Text(
                         'Rate on Google Play',
                         style: GoogleFonts.poppins(
-                          textStyle: const TextStyle(
+                          textStyle: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: TextSizes.textlarge,
                               fontWeight: FontWeight.normal),
                         ),
                       ),
@@ -641,7 +603,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                         children: [
                           Icon(
                             Icons.arrow_forward_ios_outlined,
-                            size: 23,
+                            size: 20.sp,
                             color: Colors.white,
                           ),
                         ],
@@ -653,7 +615,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                           children: [
                             Icon(
                               Icons.rate_review,
-                              size: 23,
+                              size: 20.sp,
                               color: Colors.white,
                             ),
                           ],
@@ -665,28 +627,29 @@ class _DashBoardScreenState extends State<SettingScreen> {
                     ), // Margin around the card
                   ),
                 ),
-                Divider(height: 1,thickness: 2,color: Colors.white10,),
-
+                Divider(
+                  height: 1,
+                  thickness: 2,
+                  color: Colors.white10,
+                ),
               ]),
             ),
             SizedBox(
-              height: 60,
+              height: 65.sp,
               child: Column(children: [
-
-
                 Padding(
                   padding: const EdgeInsets.only(top: 0.0),
                   child: Container(
-                    height: 58,
+                    height: 60.sp,
                     color: Colors.black, // Controls the shadow depth
                     // Card elevation
                     child: ListTile(
-                      title:Text(
+                      title: Text(
                         'Terms & Privacy',
                         style: GoogleFonts.poppins(
-                          textStyle: const TextStyle(
+                          textStyle: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: TextSizes.textlarge,
                               fontWeight: FontWeight.normal),
                         ),
                       ),
@@ -699,7 +662,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                         children: [
                           Icon(
                             Icons.arrow_forward_ios_outlined,
-                            size: 23,
+                            size: 20.sp,
                             color: Colors.white,
                           ),
                         ],
@@ -711,7 +674,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                           children: [
                             Icon(
                               Icons.privacy_tip_outlined,
-                              size: 23,
+                              size: 20.sp,
                               color: Colors.white,
                             ),
                           ],
@@ -723,28 +686,29 @@ class _DashBoardScreenState extends State<SettingScreen> {
                     ), // Margin around the card
                   ),
                 ),
-                Divider(height: 1,thickness: 2,color: Colors.white10,),
-
+                Divider(
+                  height: 1,
+                  thickness: 2,
+                  color: Colors.white10,
+                ),
               ]),
             ),
             SizedBox(
-              height: 60,
+              height: 65.sp,
               child: Column(children: [
-
-
                 Padding(
                   padding: const EdgeInsets.only(top: 0.0),
                   child: Container(
-                    height: 58,
+                    height: 60.sp,
                     color: Colors.black, // Controls the shadow depth
                     // Card elevation
                     child: ListTile(
-                      title:Text(
+                      title: Text(
                         'Logout',
                         style: GoogleFonts.poppins(
-                          textStyle: const TextStyle(
+                          textStyle: TextStyle(
                               color: Colors.cyanAccent,
-                              fontSize: 18,
+                              fontSize: TextSizes.textlarge,
                               fontWeight: FontWeight.normal),
                         ),
                       ),
@@ -757,7 +721,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                         children: [
                           Icon(
                             Icons.arrow_forward_ios_outlined,
-                            size: 23,
+                            size: 20.sp,
                             color: Colors.cyanAccent,
                           ),
                         ],
@@ -769,7 +733,7 @@ class _DashBoardScreenState extends State<SettingScreen> {
                           children: [
                             Icon(
                               Icons.logout,
-                              size: 23,
+                              size: 20.sp,
                               color: Colors.cyanAccent,
                             ),
                           ],
@@ -777,18 +741,20 @@ class _DashBoardScreenState extends State<SettingScreen> {
                       ),
                       onTap: () {
                         common.showProgressBar(context);
-
                       },
                     ), // Margin around the card
                   ),
                 ),
-                Divider(height: 1,thickness: 2,color: Colors.white10,),
-
+                Divider(
+                  height: 1,
+                  thickness: 2,
+                  color: Colors.white10,
+                ),
               ]),
             ),
-
-
-
+            SizedBox(
+              height: 65.sp,
+            ),
           ],
         ));
   }

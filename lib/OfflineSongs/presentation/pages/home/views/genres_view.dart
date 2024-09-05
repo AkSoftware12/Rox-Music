@@ -21,6 +21,7 @@ class _GenresViewState extends State<GenresView>
 
   final audioQuery = OnAudioQuery();
   List<GenreModel> items = [];
+  bool _hasPermission = false;
 
   bool isLoading = true;
 
@@ -134,5 +135,32 @@ class _GenresViewState extends State<GenresView>
       ),
     );
 
+  }
+
+  checkAndRequestPermissions({bool retry = false}) async {
+    _hasPermission = await audioQuery.checkAndRequest(
+      retryRequest: retry,
+    );
+    _hasPermission ? setState(() {}) : null;
+  }
+  Widget noAccessToLibraryWidget() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: Colors.redAccent.withOpacity(0.5),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text("Application doesn't have access to the library"),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () => checkAndRequestPermissions(retry: true),
+            child: const Text("Allow"),
+          ),
+        ],
+      ),
+    );
   }
 }

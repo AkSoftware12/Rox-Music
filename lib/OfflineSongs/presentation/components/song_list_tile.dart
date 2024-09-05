@@ -3,13 +3,16 @@ import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../Home/Home Bottom/player.dart';
 import '../../../Home/Home Bottom/src/weslide_controller.dart';
+import '../../../Home/home.dart';
 import '../../../Service/MusicService.dart';
+import '../../../baseurlp/baseurl.dart';
 import '../../data/models/player_page_arguments.dart';
 import '../../data/repositories/song_repository.dart';
 import '../pages/player_page.dart';
@@ -46,41 +49,24 @@ class _SongListTileState extends State<SongListTile> {
     return ListTile(
       onTap: () async {
 
-        musicService.playSong(
-          widget.song.uri.toString(),
-          widget.song.album.toString(),
-          widget.song.title,
-          widget.song.artist.toString(),
-        );
-        // SongRepository songRepository = context.read<SongRepository>();
-        // MediaItem mediaItem = songRepository.getMediaItemFromSong(widget.song);
-        //
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) {
-        //       return PlayerPage(mediaItem: mediaItem,);
-        //     },
-        //   ),
-        // );
 
-        // if (mounted) {
-        //
-        //   Navigator.push(
-        //     context,
-        //     MaterialPageRoute(
-        //       builder: (context) {
-        //         return PlayerPage(mediaItem: mediaItem,);
-        //       },
-        //     ),
-        //   );
-        //
-        //  //
-        //  //  Navigator.of(context).pushNamed(
-        //  //    AppRouter.playerRoute,
-        //  //    arguments: mediaItem,
-        //  // );
-        // }
+        musicService.newPlaylist.clear();
+
+        musicService.newPlaylist.add(AudioSource.uri(
+          Uri.parse(widget.song.uri.toString()),
+          tag: MusicService.musicToMediaItemoffline(widget.song),
+        ));
+        musicService.playSongAtIndex3(widget.args.initialIndex);
+
+        // musicService.playSong(
+        //   widget.song.id.toString(),
+        //   widget.song.uri.toString(),
+        //   widget.song.album.toString(),
+        //   widget.song.title,
+        //   widget.song.artist.toString(),
+        // );
+        // (context as Element).findAncestorStateOfType<BottomNavBarDemoState>()?.toggleMiniPlayerVisibility(true);
+
       },
       leading: widget.showAlbumArt
           ? QueryArtworkWidget(
